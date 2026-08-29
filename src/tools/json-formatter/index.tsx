@@ -28,9 +28,7 @@ export default function JsonFormatter() {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">
-          {error ? 'Error' : 'Formatted'}
-        </label>
+        <label className="block text-sm font-medium mb-1">{error ? 'Error' : 'Formatted'}</label>
         {error ? (
           <div className="w-full h-72 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700 overflow-auto">
             {error}

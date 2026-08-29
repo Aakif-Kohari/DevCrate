@@ -1,0 +1,13 @@
+# Normalize line endings to LF in the repository, regardless of what OS
+# checks it out or commits to it. Git still converts to CRLF in a Windows
+# working directory if core.autocrlf is set there — that's expected and
+# fine, this just keeps the repo itself (and diffs) consistent.
+* text=auto eol=lf
+
+# Windows-specific script types should stay CRLF if any get added later.
+*.{cmd,bat,ps1} text eol=crlf
+
+# Binary — never touch line endings.
+*.png binary
+*.jpg binary
+*.ico binary

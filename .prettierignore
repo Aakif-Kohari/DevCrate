@@ -1,0 +1,8 @@
+dist
+node_modules
+package-lock.json
+
+# Hand-formatted, not code — leave these alone rather than risk Prettier's
+# opinions about markdown prose wrapping or YAML comment spacing.
+*.md
+.github/

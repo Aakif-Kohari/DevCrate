@@ -1,0 +1,86 @@
+name: Issue Claim / Unclaim
+
+# Lets contributors self-assign open issues by commenting /claim (or
+# /assign, /take), and release them with /unclaim. Caps each person at
+# 5 concurrent claimed issues so one person can't sit on the whole backlog.
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  issues: write
+
+jobs:
+  claim:
+    if: >
+      !github.event.issue.pull_request &&
+      github.event.comment.user.type != 'Bot'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.comment.body.trim().toLowerCase();
+            const commenter = context.payload.comment.user.login;
+            const issue = context.payload.issue;
+            const MAX_CONCURRENT_CLAIMS = 5;
+            const STALE_LABEL = 'claimed';
+
+            const isClaim = /^\/(claim|assign|take)\b/.test(body);
+            const isUnclaim = /^\/unclaim\b/.test(body);
+            if (!isClaim && !isUnclaim) return;
+
+            if (isUnclaim) {
+              const isAssignee = (issue.assignees || []).some(a => a.login === commenter);
+              if (!isAssignee) {
+                await github.rest.issues.createComment({
+                  ...context.repo, issue_number: issue.number,
+                  body: `@${commenter} you're not currently assigned to this issue, nothing to unclaim.`,
+                });
+                return;
+              }
+              await github.rest.issues.removeAssignees({
+                ...context.repo, issue_number: issue.number, assignees: [commenter],
+              });
+              await github.rest.issues.removeLabel({
+                ...context.repo, issue_number: issue.number, name: STALE_LABEL,
+              }).catch(() => {});
+              await github.rest.issues.createComment({
+                ...context.repo, issue_number: issue.number,
+                body: `Released — @${commenter} has unclaimed this issue. It's open for anyone else now.`,
+              });
+              return;
+            }
+
+            // --- /claim ---
+            if ((issue.assignees || []).length > 0) {
+              const names = issue.assignees.map(a => `@${a.login}`).join(', ');
+              await github.rest.issues.createComment({
+                ...context.repo, issue_number: issue.number,
+                body: `This issue is already claimed by ${names}. Comment \`/unclaim\` if you're the assignee and want to release it, or check the issue list for other open ones.`,
+              });
+              return;
+            }
+
+            const { data: openClaims } = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${context.repo.owner}/${context.repo.repo} is:issue is:open assignee:${commenter} label:${STALE_LABEL}`,
+            });
+            if (openClaims.total_count >= MAX_CONCURRENT_CLAIMS) {
+              await github.rest.issues.createComment({
+                ...context.repo, issue_number: issue.number,
+                body: `@${commenter} you already have ${openClaims.total_count} claimed issue(s) in progress — please finish or \`/unclaim\` one before taking another. This keeps the queue moving for everyone.`,
+              });
+              return;
+            }
+
+            await github.rest.issues.addAssignees({
+              ...context.repo, issue_number: issue.number, assignees: [commenter],
+            });
+            await github.rest.issues.addLabels({
+              ...context.repo, issue_number: issue.number, labels: [STALE_LABEL],
+            });
+            await github.rest.issues.createComment({
+              ...context.repo, issue_number: issue.number,
+              body: `Assigned to @${commenter} 🎉\n\nFollow [\`docs/ADDING_A_TOOL.md\`](../../blob/main/docs/ADDING_A_TOOL.md) for the pattern. If you get stuck or change your mind, comment \`/unclaim\` so someone else can pick it up. If there's no activity here for 52 hours, it'll be automatically released back to the pool — you can \`/claim\` it again if you're still working on it.`,
+            });

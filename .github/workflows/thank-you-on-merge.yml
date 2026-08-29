@@ -1,0 +1,33 @@
+name: Thank You on Merge
+
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  thank-you:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const author = pr.user.login;
+
+            // Count this author's previously-merged PRs to tell first-merge apart from repeat contributors.
+            const merged = await github.paginate(github.rest.pulls.list, {
+              ...context.repo, state: 'closed', per_page: 100,
+            });
+            const priorMerges = merged.filter(p => p.user.login === author && p.merged_at && p.number !== pr.number).length;
+
+            const body = priorMerges === 0
+              ? `🎉 Merged — and that's your first tool shipped on DevCrate, @${author}! Thanks for building this. If you enjoyed it, a ⭐ on the repo helps other contributors find the project, and there are plenty more tools open in the [issue list](../../issues) whenever you're up for another.`
+              : `🎉 Merged — nice work, @${author}, that's ${priorMerges + 1} of these you've shipped now. Thanks again for contributing. If DevCrate has been fun to work on, sharing it or dropping a ⭐ helps it reach more first-time contributors too.`;
+
+            await github.rest.issues.createComment({
+              ...context.repo, issue_number: pr.number, body,
+            });

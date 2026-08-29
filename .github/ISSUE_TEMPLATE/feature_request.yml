@@ -1,0 +1,17 @@
+name: Feature Request
+description: Suggest an improvement to an existing tool, or to the project itself (not a brand-new tool — use "New Tool Proposal" for that).
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What's the improvement?
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why is it useful?
+    validations:
+      required: true

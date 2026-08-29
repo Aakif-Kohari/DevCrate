@@ -1,0 +1,24 @@
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+categories:
+  - title: '🧰 New Tools'
+    labels: ['new-tool']
+  - title: '📝 Documentation'
+    labels: ['docs']
+  - title: '🔧 Infrastructure'
+    labels: ['infra']
+  - title: '🐛 Bug Fixes'
+    labels: ['bug']
+change-template: '- $TITLE (#$NUMBER) @$AUTHOR'
+version-resolver:
+  minor:
+    labels: ['new-tool']
+  patch:
+    labels: ['bug', 'docs', 'infra']
+  default: patch
+template: |
+  ## What shipped
+
+  $CHANGES
+
+  Thanks to everyone who contributed this round! 🎉

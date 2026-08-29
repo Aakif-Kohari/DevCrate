@@ -1,0 +1,65 @@
+name: AI Mention Helper (optional)
+
+# Not part of the merge pipeline. Any contributor can tag @DevCrate-bot
+# in an issue or PR comment to ask a quick question.
+
+on:
+  issue_comment:
+    types: [created]
+
+env:
+  GEMINI_MODEL: gemini-flash-lite-latest
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  respond:
+    if: contains(github.event.comment.body, '@DevCrate-bot') && github.event.comment.user.type != 'Bot'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/github-script@v7
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        with:
+          script: |
+            if (!process.env.GEMINI_API_KEY) return; // silently skip, this is a nice-to-have
+
+            const fs = require('fs');
+            const readme = fs.existsSync('README.md') ? fs.readFileSync('README.md', 'utf8').slice(0, 3000) : '';
+            const contributing = fs.existsSync('CONTRIBUTING.md') ? fs.readFileSync('CONTRIBUTING.md', 'utf8').slice(0, 3000) : '';
+            const question = context.payload.comment.body.replace(/@DevCrate-bot/gi, '').trim();
+            const issueNumber = context.payload.issue.number;
+
+            const prompt = `You are a helpful assistant for the DevCrate open-source repo.
+            A contributor asked a question in issue/PR #${issueNumber}: "${question}"
+
+            Project README:
+            ${readme}
+
+            Contributing guide:
+            ${contributing}
+
+            Answer their question in under 150 words, friendly and specific to this repo.
+            If it's not something you can answer from the docs above, say so and suggest
+            they open a GitHub Discussion instead.`;
+
+            const res = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/${process.env.GEMINI_MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+              }
+            );
+            const data = await res.json();
+            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!text) return;
+
+            await github.rest.issues.createComment({
+              ...context.repo, issue_number: issueNumber,
+              body: `🤖 ${text}`,
+            });

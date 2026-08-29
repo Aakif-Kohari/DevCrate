@@ -1,0 +1,124 @@
+name: AI Issue Triage
+
+# Sanity-checks new issues: is it relevant to this repo, does it match the
+# project's structure, and is it a duplicate of something that already
+# exists. This is advisory only — it comments and labels, it never blocks
+# anything, since Issues don't have merge gates the way PRs do.
+
+on:
+  issues:
+    types: [opened]
+
+env:
+  GEMINI_MODEL: gemini-flash-lite-latest
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  ai-triage:
+    # Skips issues opened by the repository owner — those don't need relevance checking.
+    if: github.event.issue.user.login != github.repository_owner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/github-script@v7
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        with:
+          script: |
+            const fs = require('fs');
+            const issue = context.payload.issue;
+
+            if (!process.env.GEMINI_API_KEY) {
+              await github.rest.issues.createComment({
+                ...context.repo, issue_number: issue.number,
+                body: "_(AI triage is temporarily unavailable — this issue may need a manual look.)_",
+              });
+              return;
+            }
+
+            const readme = fs.existsSync('README.md') ? fs.readFileSync('README.md', 'utf8').slice(0, 4000) : '';
+            const spec = fs.existsSync('docs/ADDING_A_TOOL.md') ? fs.readFileSync('docs/ADDING_A_TOOL.md', 'utf8').slice(0, 3000) : '';
+            const tools = fs.existsSync('src/tools')
+              ? fs.readdirSync('src/tools', { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name).join(', ')
+              : '(none yet)';
+
+            const openIssues = await github.paginate(github.rest.issues.listForRepo, {
+              ...context.repo, state: 'open', per_page: 100,
+            });
+            const otherTitles = openIssues
+              .filter(i => i.number !== issue.number && !i.pull_request)
+              .map(i => `#${i.number}: ${i.title}`)
+              .join('\n')
+              .slice(0, 3000);
+
+            const prompt = `You are triaging a newly-opened GitHub issue on an open-source
+            repo called DevCrate. Contributors propose small, self-contained developer
+            utility tools; each tool lives in its own folder under src/tools/.
+
+            REPO README (truncated):
+            ${readme}
+
+            CONTRIBUTION SPEC (docs/ADDING_A_TOOL.md, truncated):
+            ${spec}
+
+            TOOLS THAT ALREADY EXIST: ${tools}
+
+            OTHER CURRENTLY OPEN ISSUES:
+            ${otherTitles || '(none)'}
+
+            NEW ISSUE #${issue.number}
+            Title: ${issue.title}
+            Body:
+            ${issue.body || '(empty)'}
+
+            Write a short comment (under 150 words) covering:
+            1. Relevance — does this fit the project's scope (small, client-side, self-contained tool)?
+            2. Duplicate check — does it already exist in the tools list above, or match another open issue? Name it if so.
+            3. Completeness — does it have a clear name, description, and acceptance criteria? If not, say exactly what's missing.
+            Be encouraging but direct — most people opening issues here are new to open source.
+
+            End your comment with exactly one line, verbatim, one of:
+            LABEL: READY
+            LABEL: NEEDS-INFO
+            LABEL: DUPLICATE`;
+
+            const res = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/${process.env.GEMINI_MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+              }
+            );
+            const data = await res.json();
+            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (!text) {
+              core.warning('Gemini returned no text: ' + JSON.stringify(data).slice(0, 500));
+              await github.rest.issues.createComment({
+                ...context.repo, issue_number: issue.number,
+                body: "_(AI triage call didn't return a result — please review this issue manually.)_",
+              });
+              return;
+            }
+
+            const cleanBody = text.replace(/^LABEL:.*$/m, '').trim();
+            await github.rest.issues.createComment({
+              ...context.repo, issue_number: issue.number,
+              body: `### 🤖 AI Triage\n\n${cleanBody}`,
+            });
+
+            const upper = text.toUpperCase();
+            let label = null;
+            if (upper.includes('LABEL: DUPLICATE')) label = 'duplicate';
+            else if (upper.includes('LABEL: NEEDS-INFO')) label = 'needs-info';
+            else if (upper.includes('LABEL: READY')) label = 'ready';
+            if (label) {
+              await github.rest.issues.addLabels({
+                ...context.repo, issue_number: issue.number, labels: [label],
+              }).catch(() => {});
+            }

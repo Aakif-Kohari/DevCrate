@@ -1,0 +1,18 @@
+name: Documentation
+description: Improve README, CONTRIBUTING, or docs for an existing tool — no new tool, no code logic.
+title: "[Docs] "
+labels: ["docs", "good-first-issue"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What's missing or unclear?
+    validations:
+      required: true
+  - type: textarea
+    id: where
+    attributes:
+      label: Where does it belong?
+      placeholder: "README.md / CONTRIBUTING.md / docs/ADDING_A_TOOL.md / a specific tool's inline comments"
+    validations:
+      required: true

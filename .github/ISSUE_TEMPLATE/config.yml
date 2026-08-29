@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Ask a question
+    url: https://github.com/Aakif-Kohari/DevCrate/discussions
+    about: For open-ended questions, ideas, or help getting started — not a bug or a specific tool.

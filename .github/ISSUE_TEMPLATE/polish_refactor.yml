@@ -1,0 +1,28 @@
+name: Polish an Existing Tool
+description: Improve something that already exists — tests, accessibility, mobile layout, edge cases, small UX fixes. Not a new tool.
+title: "[Polish] "
+labels: ["good-first-issue", "polish"]
+body:
+  - type: input
+    id: tool
+    attributes:
+      label: Which tool?
+      placeholder: "json-formatter"
+    validations:
+      required: true
+  - type: textarea
+    id: improvement
+    attributes:
+      label: What should improve, and why?
+      placeholder: "e.g. add a 'copy to clipboard' button, handle empty input without an error flash, add a basic test for the parsing logic, fix overflow on narrow screens"
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance criteria
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true

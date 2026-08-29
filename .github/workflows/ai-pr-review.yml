@@ -1,0 +1,155 @@
+name: PR Checks — Scope + AI Review
+
+# Two separate jobs on purpose:
+#
+# - scope-check: pure deterministic logic (no AI, no external calls,
+#   never flaky). Verifies the PR only touches one src/tools/<slug>/
+#   folder plus additions to registry.ts.
+#
+# - ai-review: sanity-checks the diff against the linked issue.
+#   ADVISORY ONLY — it always succeeds as a job and never blocks a merge,
+#   it just posts a comment.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+env:
+  GEMINI_MODEL: gemini-flash-lite-latest
+
+jobs:
+  scope-check:
+    name: scope-check
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              ...context.repo, pull_number: pr.number, per_page: 100,
+            });
+
+            const violations = [];
+            let touchedSlug = null;
+
+            for (const f of files) {
+              if (f.filename === 'src/tools/registry.ts') {
+                if (f.status !== 'modified') {
+                  violations.push('`src/tools/registry.ts` was ' + f.status + ', expected a small modification (adding one entry)');
+                } else if (f.deletions > 0) {
+                  violations.push('`src/tools/registry.ts` has ' + f.deletions + ' deleted line(s) — only additions are allowed here');
+                }
+                continue;
+              }
+              const m = f.filename.match(/^src\/tools\/([^/]+)\//);
+              if (!m) {
+                violations.push('touches `' + f.filename + '`, which is outside `src/tools/**`');
+                continue;
+              }
+              const slug = m[1];
+              if (touchedSlug && touchedSlug !== slug) {
+                violations.push('touches files in both `src/tools/' + touchedSlug + '/` and `src/tools/' + slug + '/` — one PR should add exactly one tool');
+              }
+              touchedSlug = slug;
+            }
+
+            const body = violations.length === 0
+              ? '✅ **Scope check passed** — this PR only touches `src/tools/' + (touchedSlug || '<unknown>') + '/**` plus additions to `registry.ts`.'
+              : '❌ **Scope check failed**:\n' + violations.map(v => '- ' + v).join('\n') + '\n\nSee [`docs/ADDING_A_TOOL.md`](../blob/main/docs/ADDING_A_TOOL.md) — a tool PR should only touch its own folder plus one added line in the registry.';
+
+            await github.rest.issues.createComment({
+              ...context.repo, issue_number: pr.number, body,
+            });
+
+            if (violations.length > 0) {
+              core.setFailed(violations.join(' | '));
+            }
+
+  ai-review:
+    name: ai-review
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/github-script@v7
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+
+            if (!process.env.GEMINI_API_KEY) {
+              await github.rest.issues.createComment({
+                ...context.repo, issue_number: pr.number,
+                body: "_(AI review is temporarily unavailable — CI and scope-check results above are still valid, this PR may just need a manual look too.)_",
+              });
+              return;
+            }
+
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              ...context.repo, pull_number: pr.number, per_page: 100,
+            });
+            const diffSummary = files
+              .map(f => `--- ${f.filename} (+${f.additions}/-${f.deletions}) ---\n${(f.patch || '(binary or too large for a text diff)').slice(0, 2000)}`)
+              .join('\n\n')
+              .slice(0, 12000);
+
+            const prBody = pr.body || '';
+            const issueMatch = prBody.match(/\b(?:closes|fixes|resolves)\s+#(\d+)/i);
+            let issueContext = '(no linked issue found in the PR description — ask the author to add "Closes #N")';
+            if (issueMatch) {
+              try {
+                const { data: linkedIssue } = await github.rest.issues.get({
+                  ...context.repo, issue_number: Number(issueMatch[1]),
+                });
+                issueContext = `Issue #${linkedIssue.number}: ${linkedIssue.title}\n${linkedIssue.body || ''}`.slice(0, 3000);
+              } catch (e) { /* issue not found, keep default message */ }
+            }
+
+            const prompt = `You are reviewing a pull request on DevCrate, an open-source
+            collection of small developer utility tools (one tool per folder under
+            src/tools/). A separate automated check already verified this PR's file
+            scope — don't repeat that. This review is ADVISORY ONLY: a human maintainer
+            reads it and decides whether to merge, nothing merges automatically.
+
+            Focus on:
+            1. Does the implementation actually satisfy what the linked issue asked for?
+            2. Is it reasonably correct and complete (not a stub, no obvious bugs)?
+            3. Anything specific a human reviewer should double-check before merging?
+
+            LINKED ISSUE:
+            ${issueContext}
+
+            DIFF:
+            ${diffSummary}
+
+            Write a short review, under 200 words: a 1-2 sentence summary, then a short
+            bullet list of anything worth double-checking (or say "Nothing stood out" if
+            it looks solid).`;
+
+            const res = await fetch(
+              `https://generativelanguage.googleapis.com/v1beta/models/${process.env.GEMINI_MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+              }
+            );
+            const data = await res.json();
+            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            await github.rest.issues.createComment({
+              ...context.repo, issue_number: pr.number,
+              body: text
+                ? `### 🤖 AI Review (advisory — not a merge gate)\n\n${text}`
+                : `_(AI review call failed or returned nothing — please review this PR manually. Raw response: ${JSON.stringify(data).slice(0, 300)})_`,
+            });
+            // Intentionally never calls core.setFailed — this job is informational only.

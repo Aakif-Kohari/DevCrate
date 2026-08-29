@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v9
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         with:

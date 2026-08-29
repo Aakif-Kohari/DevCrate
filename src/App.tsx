@@ -10,9 +10,7 @@ export default function App() {
     <div className="min-h-screen bg-white text-gray-900">
       <header className="border-b border-gray-200 px-6 py-4">
         <h1 className="text-xl font-semibold">🧰 DevCrate</h1>
-        <p className="text-sm text-gray-500">
-          Small developer tools, built one PR at a time.
-        </p>
+        <p className="text-sm text-gray-500">Small developer tools, built one PR at a time.</p>
       </header>
       <main className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-6 p-6">
         <nav className="space-y-2">

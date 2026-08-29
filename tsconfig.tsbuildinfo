@@ -1,0 +1,1 @@
+{"root":["./src/app.test.tsx","./src/app.tsx","./src/main.tsx","./src/test-setup.ts","./src/vite-env.d.ts","./src/components/toolcard.tsx","./src/tools/registry.ts","./src/tools/json-formatter/index.test.tsx","./src/tools/json-formatter/index.tsx","./src/tools/json-formatter/meta.ts"],"version":"5.9.3"}

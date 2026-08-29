@@ -20,6 +20,9 @@ env:
 jobs:
   scope-check:
     name: scope-check
+    # Dependabot PRs legitimately touch package.json/package-lock.json/workflow
+    # files — the src/tools/** scope rule was never meant to apply to those.
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -70,6 +73,8 @@ jobs:
 
   ai-review:
     name: ai-review
+    # Nothing meaningful for an AI review to say about a dependency bump.
+    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: read

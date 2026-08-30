@@ -89,7 +89,7 @@ jobs:
               `A couple of things that keep this moving smoothly:`,
               `- Run \`npm run verify\` locally before opening your PR — it catches most issues before CI does`,
               `- If you get stuck or change your mind, comment \`/unclaim\` so someone else can pick it up`,
-              `- No activity here for 52 hours and it's automatically released back to the pool — you can \`/claim\` it again if you're still working on it, no penalty`,
+              `- No activity here for 52 hours and it's automatically released - you can \`/claim\` it again if you're still working on it.`,
             ];
             await github.rest.issues.createComment({
               ...context.repo, issue_number: issue.number,

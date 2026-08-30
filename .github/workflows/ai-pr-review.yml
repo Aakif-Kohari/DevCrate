@@ -66,6 +66,9 @@ jobs:
             }
 
             const touchesATool = touchedSlug !== null || files.some(f => f.filename === 'src/tools/registry.ts');
+            if (touchesATool && touchedSlug === null) {
+              violations.push('`src/tools/registry.ts` must be paired with exactly one tool folder');
+            }
 
             if (touchesATool && otherFiles.length > 0) {
               violations.push(...otherFiles.map(f => 'also touches `' + f + '`, which is outside `src/tools/**` — keep tool PRs scoped to just the tool'));

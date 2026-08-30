@@ -26,9 +26,10 @@ For polish/bugfix PRs, be specific about the before/after behavior.
 
 ## Checklist
 
-**Scope** (this is what the automated `scope-check` verifies)
+**Scope** (check the option that applies; this is what the automated `scope-check` verifies)
 - [ ] This PR touches only `src/tools/<slug>/` for one tool, plus one added line in `src/tools/registry.ts`
-- [ ] No other files were touched (no drive-by formatting changes, no edits to other tools' folders)
+- [ ] This PR is documentation-only.
+- [ ] No unrelated files were touched (no drive-by formatting changes, no edits to other tools' folders)
 
 **Before opening this PR**
 - [ ] `npm run verify` passes locally (runs format check, lint, typecheck, tests, scope-check, and build in one command)

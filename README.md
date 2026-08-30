@@ -17,6 +17,7 @@ Every "developer utility" site (JSON formatter, JWT decoder, etc.) is one Google
 - **Fast feedback** — automated checks tell you within minutes if your PR is mergeable.
 - **No merge-conflict roulette** — every tool lives in its own folder, so PRs almost never collide.
 
+
 ## Tech Stack
 
 React 18 + TypeScript + Vite + Tailwind CSS. No backend, no database — everything runs client-side.

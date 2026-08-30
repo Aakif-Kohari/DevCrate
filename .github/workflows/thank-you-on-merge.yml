@@ -17,6 +17,7 @@ jobs:
           script: |
             const pr = context.payload.pull_request;
             const author = pr.user.login;
+            const repoUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}`;
 
             // Count this author's previously-merged PRs to tell first-merge apart from repeat contributors.
             const merged = await github.paginate(github.rest.pulls.list, {
@@ -25,8 +26,18 @@ jobs:
             const priorMerges = merged.filter(p => p.user.login === author && p.merged_at && p.number !== pr.number).length;
 
             const body = priorMerges === 0
-              ? `🎉 Merged — and that's your first tool shipped on DevCrate, @${author}! Thanks for building this. If you enjoyed it, a ⭐ on the repo helps other contributors find the project, and there are plenty more tools open in the [issue list](../../issues) whenever you're up for another.`
-              : `🎉 Merged — nice work, @${author}, that's ${priorMerges + 1} of these you've shipped now. Thanks again for contributing. If DevCrate has been fun to work on, sharing it or dropping a ⭐ helps it reach more first-time contributors too.`;
+              ? [
+                  `🎉 Merged — and that's your first tool shipped on DevCrate, @${author}!`,
+                  ``,
+                  `Thanks for building this.`,
+                  ``,
+                  `If you enjoyed it, a ⭐ on the repo helps other contributors find the project, and there are plenty more tools open in the [issue list](${repoUrl}/issues) whenever you're up for another.`,
+                ].join('\n')
+              : [
+                  `🎉 Merged — nice work, @${author}, that's ${priorMerges + 1} of these you've shipped now.`,
+                  ``,
+                  `Thanks again for contributing. If DevCrate has been fun to work on, sharing it or dropping a ⭐ helps it reach more first-time contributors too.`,
+                ].join('\n');
 
             await github.rest.issues.createComment({
               ...context.repo, issue_number: pr.number, body,

@@ -29,7 +29,7 @@ jobs:
             already assigned to you — no need to comment `/claim`.
 
 
-            Check out [`docs/ADDING_A_TOOL.md`](https://github.com/Aakif-Kohari/DevCrate/blob/main/docs/ADDING_A_TOOL.md)
+            Check out [`docs/ADDING_A_TOOL.md`](https://github.com/${{ github.repository }}/blob/main/docs/ADDING_A_TOOL.md) 
             for the pattern, and `npm run verify` locally before opening your PR.
 
 

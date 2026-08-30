@@ -21,15 +21,26 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           issue-message: >
-            Welcome, and thanks for opening your first issue here! 🎉 If you're proposing a
-            new tool, an automated check will comment shortly with a relevance/duplicate
-            check. If you'd like to build it yourself, this issue is already assigned to
-            you — no need to comment `/claim`. Check out
-            [`docs/ADDING_A_TOOL.md`](../blob/main/docs/ADDING_A_TOOL.md) for the pattern.
+            Welcome, and thanks for opening your first issue here! 🎉
+
+
+            If you're proposing a new tool, an automated check will comment shortly with a
+            relevance/duplicate check. If you'd like to build it yourself, this issue is
+            already assigned to you — no need to comment `/claim`.
+
+
+            Check out [`docs/ADDING_A_TOOL.md`](https://github.com/${{ github.repository }}/blob/main/docs/ADDING_A_TOOL.md) 
+            for the pattern, and `npm run verify` locally before opening your PR.
+
+
             If this project is useful to you, a ⭐ on the repo helps others find it too.
           pr-message: >
-            Thanks for opening your first pull request here — that's a big step, welcome!
-            🎉 CI and an automated review will run in a few minutes; check back on this PR
-            for the results. If you get stuck on anything, feel free to ask right here.
+            Thanks for opening your first pull request here — that's a big step, welcome! 🎉
+
+
+            CI and an automated review will run in a few minutes; check back on this PR for
+            the results. If you get stuck on anything, feel free to ask right here.
+
+
             And if you're enjoying contributing, a ⭐ on the repo goes a long way for a
             project like this.

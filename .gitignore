@@ -37,6 +37,9 @@ pnpm-debug.log*
 # Testing
 coverage/
 
+# TypeScript incremental build cache — machine-specific, shouldn't be committed
+*.tsbuildinfo
+
 # Misc
 *.local
 

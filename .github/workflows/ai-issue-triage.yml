@@ -55,36 +55,41 @@ jobs:
               .join('\n')
               .slice(0, 3000);
 
-            const prompt = `You are triaging a newly-opened GitHub issue on an open-source
-            repo called DevCrate. Contributors propose small, self-contained developer
-            utility tools; each tool lives in its own folder under src/tools/.
-
-            REPO README (truncated):
-            ${readme}
-
-            CONTRIBUTION SPEC (docs/ADDING_A_TOOL.md, truncated):
-            ${spec}
-
-            TOOLS THAT ALREADY EXIST: ${tools}
-
-            OTHER CURRENTLY OPEN ISSUES:
-            ${otherTitles || '(none)'}
-
-            NEW ISSUE #${issue.number}
-            Title: ${issue.title}
-            Body:
-            ${issue.body || '(empty)'}
-
-            Write a short comment (under 150 words) covering:
-            1. Relevance — does this fit the project's scope (small, client-side, self-contained tool)?
-            2. Duplicate check — does it already exist in the tools list above, or match another open issue? Name it if so.
-            3. Completeness — does it have a clear name, description, and acceptance criteria? If not, say exactly what's missing.
-            Be encouraging but direct — most people opening issues here are new to open source.
-
-            End your comment with exactly one line, verbatim, one of:
-            LABEL: READY
-            LABEL: NEEDS-INFO
-            LABEL: DUPLICATE`;
+            // Built as an array of lines (not an indented template literal) so the
+            // YAML file's own indentation never leaks into the actual prompt text
+            // sent to Gemini.
+            const prompt = [
+              `You are triaging a newly-opened GitHub issue on an open-source`,
+              `repo called DevCrate. Contributors propose small, self-contained developer`,
+              `utility tools; each tool lives in its own folder under src/tools/.`,
+              ``,
+              `REPO README (truncated):`,
+              readme,
+              ``,
+              `CONTRIBUTION SPEC (docs/ADDING_A_TOOL.md, truncated):`,
+              spec,
+              ``,
+              `TOOLS THAT ALREADY EXIST: ${tools}`,
+              ``,
+              `OTHER CURRENTLY OPEN ISSUES:`,
+              otherTitles || '(none)',
+              ``,
+              `NEW ISSUE #${issue.number}`,
+              `Title: ${issue.title}`,
+              `Body:`,
+              issue.body || '(empty)',
+              ``,
+              `Write a short comment (under 150 words) covering:`,
+              `1. Relevance — does this fit the project's scope (small, client-side, self-contained tool)?`,
+              `2. Duplicate check — does it already exist in the tools list above, or match another open issue? Name it if so.`,
+              `3. Completeness — does it have a clear name, description, and acceptance criteria? If not, say exactly what's missing.`,
+              `Be encouraging but direct — most people opening issues here are new to open source.`,
+              ``,
+              `End your comment with exactly one line, verbatim, one of:`,
+              `LABEL: READY`,
+              `LABEL: NEEDS-INFO`,
+              `LABEL: DUPLICATE`,
+            ].join('\n');
 
             const res = await fetch(
               `https://generativelanguage.googleapis.com/v1beta/models/${process.env.GEMINI_MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`,

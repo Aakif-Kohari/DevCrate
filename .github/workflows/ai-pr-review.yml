@@ -59,9 +59,10 @@ jobs:
               touchedSlug = slug;
             }
 
+            const repoUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}`;
             const body = violations.length === 0
               ? '✅ **Scope check passed** — this PR only touches `src/tools/' + (touchedSlug || '<unknown>') + '/**` plus additions to `registry.ts`.'
-              : '❌ **Scope check failed**:\n' + violations.map(v => '- ' + v).join('\n') + '\n\nSee [`docs/ADDING_A_TOOL.md`](../blob/main/docs/ADDING_A_TOOL.md) — a tool PR should only touch its own folder plus one added line in the registry.';
+              : '❌ **Scope check failed**:\n' + violations.map(v => '- ' + v).join('\n') + '\n\nSee [`docs/ADDING_A_TOOL.md`](' + repoUrl + '/blob/main/docs/ADDING_A_TOOL.md) — a tool PR should only touch its own folder plus one added line in the registry.';
 
             await github.rest.issues.createComment({
               ...context.repo, issue_number: pr.number, body,
@@ -119,26 +120,31 @@ jobs:
               } catch (e) { /* issue not found, keep default message */ }
             }
 
-            const prompt = `You are reviewing a pull request on DevCrate, an open-source
-            collection of small developer utility tools (one tool per folder under
-            src/tools/). A separate automated check already verified this PR's file
-            scope — don't repeat that. This review is ADVISORY ONLY: a human maintainer
-            reads it and decides whether to merge, nothing merges automatically.
-
-            Focus on:
-            1. Does the implementation actually satisfy what the linked issue asked for?
-            2. Is it reasonably correct and complete (not a stub, no obvious bugs)?
-            3. Anything specific a human reviewer should double-check before merging?
-
-            LINKED ISSUE:
-            ${issueContext}
-
-            DIFF:
-            ${diffSummary}
-
-            Write a short review, under 200 words: a 1-2 sentence summary, then a short
-            bullet list of anything worth double-checking (or say "Nothing stood out" if
-            it looks solid).`;
+            // Built as an array of lines (not an indented template literal) so the
+            // YAML file's own indentation never leaks into the actual prompt text
+            // sent to Gemini.
+            const prompt = [
+              `You are reviewing a pull request on DevCrate, an open-source`,
+              `collection of small developer utility tools (one tool per folder under`,
+              `src/tools/). A separate automated check already verified this PR's file`,
+              `scope — don't repeat that. This review is ADVISORY ONLY: a human maintainer`,
+              `reads it and decides whether to merge, nothing merges automatically.`,
+              ``,
+              `Focus on:`,
+              `1. Does the implementation actually satisfy what the linked issue asked for?`,
+              `2. Is it reasonably correct and complete (not a stub, no obvious bugs)?`,
+              `3. Anything specific a human reviewer should double-check before merging?`,
+              ``,
+              `LINKED ISSUE:`,
+              issueContext,
+              ``,
+              `DIFF:`,
+              diffSummary,
+              ``,
+              `Write a short review, under 200 words: a 1-2 sentence summary, then a short`,
+              `bullet list of anything worth double-checking (or say "Nothing stood out" if`,
+              `it looks solid).`,
+            ].join('\n');
 
             const res = await fetch(
               `https://generativelanguage.googleapis.com/v1beta/models/${process.env.GEMINI_MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`,

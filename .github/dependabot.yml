@@ -12,6 +12,14 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      # eslint-plugin-react-refresh is pre-1.0 (0.x), so semver treats a
+      # 0.4 -> 0.5 bump as "minor" even though it dropped ESLint 8 support
+      # (its 0.5.x peer dependency requires ESLint 9/10). The blanket
+      # major-version ignore above doesn't catch this because the package
+      # never leaves major version 0. Remove this once ESLint itself is
+      # deliberately upgraded past 8.
+      - dependency-name: "eslint-plugin-react-refresh"
+        update-types: ["version-update:semver-minor"]
 
   - package-ecosystem: "github-actions"
     directory: "/"

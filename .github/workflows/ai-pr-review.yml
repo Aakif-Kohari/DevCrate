@@ -35,8 +35,14 @@ jobs:
               ...context.repo, pull_number: pr.number, per_page: 100,
             });
 
+            // Split files into "tool files" (src/tools/<slug>/** or registry.ts)
+            // and everything else. The one-tool-per-PR rule only applies once a
+            // PR actually touches a tool folder — a docs-only, infra-only, or
+            // config-only PR (the Documentation/Polish issue categories) isn't
+            // a "new tool" submission and shouldn't be judged as one.
             const violations = [];
             let touchedSlug = null;
+            const otherFiles = [];
 
             for (const f of files) {
               if (f.filename === 'src/tools/registry.ts') {
@@ -49,7 +55,7 @@ jobs:
               }
               const m = f.filename.match(/^src\/tools\/([^/]+)\//);
               if (!m) {
-                violations.push('touches `' + f.filename + '`, which is outside `src/tools/**`');
+                otherFiles.push(f.filename);
                 continue;
               }
               const slug = m[1];
@@ -59,10 +65,21 @@ jobs:
               touchedSlug = slug;
             }
 
+            const touchesATool = touchedSlug !== null || files.some(f => f.filename === 'src/tools/registry.ts');
+
+            if (touchesATool && otherFiles.length > 0) {
+              violations.push(...otherFiles.map(f => 'also touches `' + f + '`, which is outside `src/tools/**` — keep tool PRs scoped to just the tool'));
+            }
+
             const repoUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}`;
-            const body = violations.length === 0
-              ? '✅ **Scope check passed** — this PR only touches `src/tools/' + (touchedSlug || '<unknown>') + '/**` plus additions to `registry.ts`.'
-              : '❌ **Scope check failed**:\n' + violations.map(v => '- ' + v).join('\n') + '\n\nSee [`docs/ADDING_A_TOOL.md`](' + repoUrl + '/blob/main/docs/ADDING_A_TOOL.md) — a tool PR should only touch its own folder plus one added line in the registry.';
+            let body;
+            if (!touchesATool) {
+              body = '✅ **Scope check passed** — no `src/tools/**` folder touched, so this isn\'t subject to the one-tool-per-PR rule (docs/infra/config change).';
+            } else if (violations.length === 0) {
+              body = '✅ **Scope check passed** — this PR only touches `src/tools/' + touchedSlug + '/**` plus additions to `registry.ts`.';
+            } else {
+              body = '❌ **Scope check failed**:\n' + violations.map(v => '- ' + v).join('\n') + '\n\nSee [`docs/ADDING_A_TOOL.md`](' + repoUrl + '/blob/main/docs/ADDING_A_TOOL.md) — a tool PR should only touch its own folder plus one added line in the registry.';
+            }
 
             await github.rest.issues.createComment({
               ...context.repo, issue_number: pr.number, body,

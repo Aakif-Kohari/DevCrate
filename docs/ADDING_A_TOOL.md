@@ -43,7 +43,7 @@ That's it. That one rule is what the automated scope check enforces.
 
 ## What gets checked automatically
 
-- **Scope**: does the diff touch only `src/tools/<slug>/**` + the registry line? (fails if it touches anything else, including other tools' folders)
+- **Scope**: if your PR touches a `src/tools/<slug>/**` folder at all, it must stay to exactly one tool plus the registry line (fails if it also touches other tools' folders or unrelated files). PRs that don't touch `src/tools/` at all — docs, polish, infra — aren't subject to this rule.
 - **Build**: does `npm run build` succeed?
 - **Lint**: does the code pass ESLint?
 - **Relevance / correctness**: does the implementation actually do what the linked issue described? Is it a duplicate of an existing tool?

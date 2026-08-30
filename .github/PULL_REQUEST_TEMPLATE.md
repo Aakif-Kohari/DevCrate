@@ -1,6 +1,6 @@
 ## What kind of change is this?
 
-<!-- Check exactly one -->
+<!-- Choose those that apply -->
 - [ ] 🧰 New tool (`src/tools/<slug>/`)
 - [ ] 🔧 Polish on an existing tool (tests, accessibility, mobile layout, edge cases)
 - [ ] 📝 Documentation only
@@ -9,7 +9,7 @@
 
 ## Summary
 
-<!-- What does this PR add or change? A sentence or two is plenty. -->
+<!-- What does this PR add or change? A sentence or two about it -->
 
 Closes #<!-- issue number -->
 
@@ -27,7 +27,7 @@ For polish/bugfix PRs, be specific about the before/after behavior.
 ## Checklist
 
 **Scope** (this is what the automated `scope-check` verifies)
-- [ ] This PR touches only `src/tools/<slug>/` for one tool, plus at most one added line in `src/tools/registry.ts`
+- [ ] This PR touches only `src/tools/<slug>/` for one tool, plus one added line in `src/tools/registry.ts`
 - [ ] No other files were touched (no drive-by formatting changes, no edits to other tools' folders)
 
 **Before opening this PR**

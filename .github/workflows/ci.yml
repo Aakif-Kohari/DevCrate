@@ -6,6 +6,11 @@ on:
   push:
     branches: [main]
 
+# All five jobs below only checkout and run npm commands — none of them
+# write anything back to GitHub, so read-only is sufficient everywhere.
+permissions:
+  contents: read
+
 jobs:
   build:
     name: build
@@ -66,4 +71,3 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run format:check
-  

@@ -14,6 +14,12 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+# Explicit deny-by-default at the workflow level — each job below grants
+# only the specific permissions it actually needs. Flagged by zizmor
+# (excessive-permissions) when this was missing, since without it the
+# GITHUB_TOKEN falls back to whatever the repo's default permissions are.
+permissions: {}
+
 env:
   GEMINI_MODEL: gemini-flash-lite-latest
 
@@ -35,21 +41,34 @@ jobs:
               ...context.repo, pull_number: pr.number, per_page: 100,
             });
 
+            // Fail closed if the PR is too large for the GitHub API to return all files (max 3000 limit)
+            if (files.length !== pr.changed_files) {
+              const msg = 'The GitHub API only returned ' + files.length + ' out of ' + pr.changed_files + ' changed files (API limit is 3000). Scope check cannot run safely; please review manually.';
+              await github.rest.issues.createComment({
+                ...context.repo, issue_number: pr.number, body: '❌ **Scope check skipped**: ' + msg,
+              });
+              core.setFailed(msg);
+              return;
+            }
+
+            // Split files into "tool files" (src/tools/<slug>/** or registry.ts)
+            // and everything else. The one-tool-per-PR rule only applies once a
+            // PR actually touches a tool folder — a docs-only, infra-only, or
+            // config-only PR (the Documentation/Polish issue categories) isn't
+            // a "new tool" submission and shouldn't be judged as one.
             const violations = [];
             let touchedSlug = null;
+            let registryFile = null;
+            const otherFiles = [];
 
             for (const f of files) {
               if (f.filename === 'src/tools/registry.ts') {
-                if (f.status !== 'modified') {
-                  violations.push('`src/tools/registry.ts` was ' + f.status + ', expected a small modification (adding one entry)');
-                } else if (f.deletions > 0) {
-                  violations.push('`src/tools/registry.ts` has ' + f.deletions + ' deleted line(s) — only additions are allowed here');
-                }
+                registryFile = f;
                 continue;
               }
               const m = f.filename.match(/^src\/tools\/([^/]+)\//);
               if (!m) {
-                violations.push('touches `' + f.filename + '`, which is outside `src/tools/**`');
+                otherFiles.push(f.filename);
                 continue;
               }
               const slug = m[1];
@@ -59,10 +78,60 @@ jobs:
               touchedSlug = slug;
             }
 
+            const touchesATool = touchedSlug !== null || registryFile !== null;
+
+            if (touchedSlug !== null && registryFile === null) {
+              violations.push('adds `src/tools/' + touchedSlug + '/` but never touches `src/tools/registry.ts` — a new tool needs exactly one added line there to register it');
+            }
+            if (registryFile !== null && touchedSlug === null) {
+              violations.push('`src/tools/registry.ts` must be paired with exactly one tool folder');
+            }
+            if (registryFile !== null) {
+              if (registryFile.status !== 'modified') {
+                violations.push('`src/tools/registry.ts` was ' + registryFile.status + ', expected a small modification (adding one entry)');
+              } else if (registryFile.deletions > 0) {
+                violations.push('`src/tools/registry.ts` has ' + registryFile.deletions + ' deleted line(s) — only additions are allowed here');
+              } else {
+                // Parse the patch to ensure exactly one valid toolRegistry entry was added
+                const patch = registryFile.patch || '';
+                const addedText = patch.split('\n')
+                  .filter(l => l.startsWith('+') && !l.startsWith('+++'))
+                  .map(l => l.substring(1)) // remove the '+' diff prefix
+                  .join('\n')
+                  .replace(/\/\/.*$/gm, '') // strip single-line comments
+                  .replace(/\/\*[\s\S]*?\*\//g, ''); // strip multi-line comments
+
+                // Verify imports match the touchedSlug
+                if (touchedSlug) {
+                  const hasMetaImport = new RegExp(`import\\s+\\w+\\s+from\\s+['"]\\./${touchedSlug}/meta['"]`).test(addedText);
+                  const hasCompImport = new RegExp(`import\\s+\\w+\\s+from\\s+['"]\\./${touchedSlug}['"]`).test(addedText);
+                  if (!hasMetaImport || !hasCompImport) {
+                    violations.push('`src/tools/registry.ts` is missing required imports for `' + touchedSlug + '` (expected `./' + touchedSlug + '/meta` and `./' + touchedSlug + '`)');
+                  }
+                }
+
+                // Count valid registry entries (handles multiple on one line, ignores comments)
+                const entryRegex = /\{\s*meta\s*:\s*\w+\s*,\s*Component\s*:\s*\w+\s*,?\s*\}/g;
+                const entries = addedText.match(entryRegex) || [];
+                if (entries.length !== 1) {
+                  violations.push('`src/tools/registry.ts` has ' + entries.length + ' added registry entries — exactly one is expected per tool');
+                }
+              }
+            }
+
+            if (touchesATool && otherFiles.length > 0) {
+              violations.push(...otherFiles.map(f => 'also touches `' + f + '`, which is outside `src/tools/**` — keep tool PRs scoped to just the tool'));
+            }
+
             const repoUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}`;
-            const body = violations.length === 0
-              ? '✅ **Scope check passed** — this PR only touches `src/tools/' + (touchedSlug || '<unknown>') + '/**` plus additions to `registry.ts`.'
-              : '❌ **Scope check failed**:\n' + violations.map(v => '- ' + v).join('\n') + '\n\nSee [`docs/ADDING_A_TOOL.md`](' + repoUrl + '/blob/main/docs/ADDING_A_TOOL.md) — a tool PR should only touch its own folder plus one added line in the registry.';
+            let body;
+            if (!touchesATool) {
+              body = '✅ **Scope check passed** — no `src/tools/**` folder touched, so this isn\'t subject to the one-tool-per-PR rule (docs/infra/config change).';
+            } else if (violations.length === 0) {
+              body = '✅ **Scope check passed** — this PR only touches `src/tools/' + touchedSlug + '/**` plus additions to `registry.ts`.';
+            } else {
+              body = '❌ **Scope check failed**:\n' + violations.map(v => '- ' + v).join('\n') + '\n\nSee [`docs/ADDING_A_TOOL.md`](' + repoUrl + '/blob/main/docs/ADDING_A_TOOL.md) — a tool PR should only touch its own folder plus one added line in the registry.';
+            }
 
             await github.rest.issues.createComment({
               ...context.repo, issue_number: pr.number, body,
@@ -79,6 +148,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      issues: read
       pull-requests: write
     steps:
       - uses: actions/checkout@v4

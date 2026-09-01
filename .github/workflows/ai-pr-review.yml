@@ -92,13 +92,29 @@ jobs:
               } else if (registryFile.deletions > 0) {
                 violations.push('`src/tools/registry.ts` has ' + registryFile.deletions + ' deleted line(s) — only additions are allowed here');
               } else {
-                // Parse the patch to ensure exactly one valid toolRegistry entry was added, 
-                // ignoring imports, blank lines, or comments.
+                // Parse the patch to ensure exactly one valid toolRegistry entry was added
                 const patch = registryFile.patch || '';
-                const addedLines = patch.split('\n').filter(l => l.startsWith('+') && !l.startsWith('+++'));
-                const registryEntries = addedLines.filter(l => l.includes('{') && l.includes('meta:') && l.includes('Component:'));
-                if (registryEntries.length !== 1) {
-                  violations.push('`src/tools/registry.ts` has ' + registryEntries.length + ' added registry entries — exactly one is expected per tool');
+                const addedText = patch.split('\n')
+                  .filter(l => l.startsWith('+') && !l.startsWith('+++'))
+                  .map(l => l.substring(1)) // remove the '+' diff prefix
+                  .join('\n')
+                  .replace(/\/\/.*$/gm, '') // strip single-line comments
+                  .replace(/\/\*[\s\S]*?\*\//g, ''); // strip multi-line comments
+
+                // Verify imports match the touchedSlug
+                if (touchedSlug) {
+                  const hasMetaImport = new RegExp(`import\\s+\\w+\\s+from\\s+['"]\\./${touchedSlug}/meta['"]`).test(addedText);
+                  const hasCompImport = new RegExp(`import\\s+\\w+\\s+from\\s+['"]\\./${touchedSlug}['"]`).test(addedText);
+                  if (!hasMetaImport || !hasCompImport) {
+                    violations.push('`src/tools/registry.ts` is missing required imports for `' + touchedSlug + '` (expected `./' + touchedSlug + '/meta` and `./' + touchedSlug + '`)');
+                  }
+                }
+
+                // Count valid registry entries (handles multiple on one line, ignores comments)
+                const entryRegex = /\{\s*meta\s*:\s*\w+\s*,\s*Component\s*:\s*\w+\s*,?\s*\}/g;
+                const entries = addedText.match(entryRegex) || [];
+                if (entries.length !== 1) {
+                  violations.push('`src/tools/registry.ts` has ' + entries.length + ' added registry entries — exactly one is expected per tool');
                 }
               }
             }

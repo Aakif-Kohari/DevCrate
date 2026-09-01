@@ -41,6 +41,16 @@ jobs:
               ...context.repo, pull_number: pr.number, per_page: 100,
             });
 
+            // Fail closed if the PR is too large for the GitHub API to return all files (max 3000 limit)
+            if (files.length !== pr.changed_files) {
+              const msg = 'The GitHub API only returned ' + files.length + ' out of ' + pr.changed_files + ' changed files (API limit is 3000). Scope check cannot run safely; please review manually.';
+              await github.rest.issues.createComment({
+                ...context.repo, issue_number: pr.number, body: '❌ **Scope check skipped**: ' + msg,
+              });
+              core.setFailed(msg);
+              return;
+            }
+
             // Split files into "tool files" (src/tools/<slug>/** or registry.ts)
             // and everything else. The one-tool-per-PR rule only applies once a
             // PR actually touches a tool folder — a docs-only, infra-only, or
@@ -81,8 +91,15 @@ jobs:
                 violations.push('`src/tools/registry.ts` was ' + registryFile.status + ', expected a small modification (adding one entry)');
               } else if (registryFile.deletions > 0) {
                 violations.push('`src/tools/registry.ts` has ' + registryFile.deletions + ' deleted line(s) — only additions are allowed here');
-              } else if (registryFile.additions !== 1) {
-                violations.push('`src/tools/registry.ts` has ' + registryFile.additions + ' added line(s) — exactly one is expected per tool');
+              } else {
+                // Parse the patch to ensure exactly one valid toolRegistry entry was added, 
+                // ignoring imports, blank lines, or comments.
+                const patch = registryFile.patch || '';
+                const addedLines = patch.split('\n').filter(l => l.startsWith('+') && !l.startsWith('+++'));
+                const registryEntries = addedLines.filter(l => l.includes('{') && l.includes('meta:') && l.includes('Component:'));
+                if (registryEntries.length !== 1) {
+                  violations.push('`src/tools/registry.ts` has ' + registryEntries.length + ' added registry entries — exactly one is expected per tool');
+                }
               }
             }
 

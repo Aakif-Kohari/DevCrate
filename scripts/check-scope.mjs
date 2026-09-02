@@ -4,14 +4,18 @@
 // .github/workflows/ai-pr-review.yml) is the authoritative one; this is
 // just fast local feedback using the same rules:
 //   - a tool PR should only touch one src/tools/<slug>/ folder
+//   - a registry.ts change must be paired with a tool folder (can't be
+//     the only thing touched)
 //   - once you touch a tools folder at all, unrelated files elsewhere are
 //     out of scope
 //   - if you don't touch src/tools/** at all (docs/infra/config changes),
 //     none of this applies
 // This script intentionally does NOT check whether registry.ts was
-// updated correctly (that needs each file's added/modified/deleted status
-// and patch content, which `git diff --name-only` doesn't give us) — that
-// finer check is CI-side only, see ai-pr-review.yml.
+// updated *correctly* for a new tool (imports, exactly one entry, whether
+// the tool is actually new) — that needs each file's added/modified
+// status, patch content, and a base-branch lookup, none of which
+// `git diff --name-only` gives us. That finer check is CI-side only, see
+// ai-pr-review.yml.
 
 import { execSync } from 'node:child_process'
 
@@ -45,11 +49,13 @@ if (files.length === 0) {
 
 const violations = []
 let touchedSlug = null
+let touchesRegistry = false
 let touchesATool = false
 const otherFiles = []
 
 for (const file of files) {
   if (file === 'src/tools/registry.ts') {
+    touchesRegistry = true
     touchesATool = true
     continue
   }
@@ -78,10 +84,19 @@ if (!touchesATool) {
   process.exit(0)
 }
 
+// registry.ts on its own, with no tool folder touched, is never valid —
+// it must be paired with the tool it's registering (matches CI).
+if (touchesRegistry && touchedSlug === null) {
+  violations.push(
+    'touches `src/tools/registry.ts` without touching any `src/tools/<slug>/` folder — registry.ts must be paired with exactly one tool folder',
+  )
+}
+
 if (otherFiles.length > 0) {
   violations.push(
     ...otherFiles.map(
-      (f) => `touches \`${f}\`, which is outside src/tools/** — keep tool PRs scoped to just the tool`,
+      (f) =>
+        `touches \`${f}\`, which is outside src/tools/** — keep tool PRs scoped to just the tool`,
     ),
   )
 }

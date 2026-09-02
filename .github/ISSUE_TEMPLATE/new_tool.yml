@@ -1,7 +1,7 @@
 name: New Tool Proposal
 description: Propose (or claim) a new small developer tool to add to DevCrate.
 title: "[Tool] "
-labels: ["new-tool", "good-first-issue"]
+labels: ["new-tool", "good first issue"]
 body:
   - type: input
     id: tool-name

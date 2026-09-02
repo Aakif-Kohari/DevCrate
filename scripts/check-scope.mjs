@@ -2,8 +2,16 @@
 // Local approximation of the CI "scope-check" — run this before opening a
 // PR to catch scope violations early. CI's version (in
 // .github/workflows/ai-pr-review.yml) is the authoritative one; this is
-// just fast local feedback using the same rule: a tool PR should only
-// touch one src/tools/<slug>/ folder, plus additions to registry.ts.
+// just fast local feedback using the same rules:
+//   - a tool PR should only touch one src/tools/<slug>/ folder
+//   - once you touch a tools folder at all, unrelated files elsewhere are
+//     out of scope
+//   - if you don't touch src/tools/** at all (docs/infra/config changes),
+//     none of this applies
+// This script intentionally does NOT check whether registry.ts was
+// updated correctly (that needs each file's added/modified/deleted status
+// and patch content, which `git diff --name-only` doesn't give us) — that
+// finer check is CI-side only, see ai-pr-review.yml.
 
 import { execSync } from 'node:child_process'
 
@@ -37,14 +45,20 @@ if (files.length === 0) {
 
 const violations = []
 let touchedSlug = null
+let touchesATool = false
+const otherFiles = []
 
 for (const file of files) {
-  if (file === 'src/tools/registry.ts') continue // additions-only check is CI-side, needs PR diff detail
-  const m = file.match(/^src\/tools\/([^/]+)\//)
-  if (!m) {
-    violations.push(`touches \`${file}\`, which is outside src/tools/**`)
+  if (file === 'src/tools/registry.ts') {
+    touchesATool = true
     continue
   }
+  const m = file.match(/^src\/tools\/([^/]+)\//)
+  if (!m) {
+    otherFiles.push(file)
+    continue
+  }
+  touchesATool = true
   const slug = m[1]
   if (touchedSlug && touchedSlug !== slug) {
     violations.push(
@@ -54,15 +68,33 @@ for (const file of files) {
   touchedSlug = slug
 }
 
+// The one-tool-per-PR rule only applies once a PR actually touches
+// src/tools/** at all — a docs-only, infra-only, or config-only PR isn't a
+// tool submission and shouldn't be judged as one (matches CI).
+if (!touchesATool) {
+  console.log(
+    '✅ No src/tools/** folder touched — not subject to the one-tool-per-PR rule (docs/infra/config change).',
+  )
+  process.exit(0)
+}
+
+if (otherFiles.length > 0) {
+  violations.push(
+    ...otherFiles.map(
+      (f) => `touches \`${f}\`, which is outside src/tools/** — keep tool PRs scoped to just the tool`,
+    ),
+  )
+}
+
 if (violations.length > 0) {
   console.error('❌ Scope check failed:')
   for (const v of violations) console.error(`   - ${v}`)
   console.error(
-    '\nSee docs/ADDING_A_TOOL.md — a tool PR should only touch its own folder plus registry.ts.',
+    '\nSee docs/ADDING_A_TOOL.md — a tool PR should only touch its own folder plus, for new tools, registry.ts.',
   )
   process.exit(1)
 }
 
 console.log(
-  `✅ Scope check passed — changes stay within src/tools/${touchedSlug || '<unknown>'}/** (+ registry.ts).`,
+  `✅ Scope check passed — changes stay within src/tools/${touchedSlug || '<unknown>'}/** (+ registry.ts, if this is a new tool).`,
 )

@@ -39,7 +39,7 @@ git push origin main
 
 ## 2. Pick an issue
 
-- Browse [open issues](../../issues). Anything tagged `new-tool` and `good-first-issue` is ready to build.
+- Browse [open issues](../../issues). Anything tagged `new-tool` and `good first issue` is ready to build.
 - Anyone can open new issues too — if you have an idea for a tool that isn't listed, open one using the **New Tool Proposal**, **Documentation**, or **Polish an Existing Tool** template. It'll be auto-checked for relevance and duplicates before anyone starts work, and it gets assigned straight to you automatically — no separate claim step needed for issues you open yourself.
 
 ## 3. Claim it

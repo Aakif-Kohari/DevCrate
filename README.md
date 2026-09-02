@@ -47,7 +47,7 @@ New here? Full guide: [`CONTRIBUTING.md`](CONTRIBUTING.md) (fork/branch/PR steps
    cd DevCrate
    npm install
    ```
-2. Find an open issue tagged `good-first-issue` or `new-tool`, comment `/claim`.
+2. Find an open issue tagged `good first issue` or `new-tool`, comment `/claim`.
 3. Branch, build, register: `git checkout -b my-tool`, build the tool inside `src/tools/<your-tool-slug>/` (copy the existing `json-formatter` example), register it in `src/tools/registry.ts` (one line).
 4. `npm run verify`, then push your branch and open a PR from your fork into this repo's `main`.
 5. Automated checks + an AI review bot will comment within minutes.

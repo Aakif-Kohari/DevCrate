@@ -4,14 +4,45 @@ name: PR Checks — Scope + AI Review
 #
 # - scope-check: pure deterministic logic (no AI, no external calls,
 #   never flaky). Verifies the PR only touches one src/tools/<slug>/
-#   folder plus additions to registry.ts.
+#   folder, and — only when it's introducing a brand-new tool — that
+#   it's paired with exactly one added registry entry in registry.ts.
 #
 # - ai-review: sanity-checks the diff against the linked issue.
-#   ADVISORY ONLY — it always succeeds as a job and never blocks a merge,
-#   it just posts a comment.
+#   ADVISORY ONLY — it never blocks a merge, it just posts a comment.
+#
+# Both jobs need a writable GITHUB_TOKEN (to comment), and ai-review also
+# needs the GEMINI_API_KEY secret. Every real contribution to this repo
+# comes from a fork (see CONTRIBUTING.md) — and GitHub deliberately hands
+# `pull_request`-triggered runs from forks a read-only token with NO
+# secrets. On plain `pull_request` that means both jobs below would 403
+# the moment they tried to comment (scope-check unconditionally comments,
+# even on a pass), and ai-review would never see GEMINI_API_KEY — i.e.
+# these checks would never actually work for an outside contributor,
+# only for pushes to a branch on this repo itself.
+#
+# We use `pull_request_target` instead, which runs with the base repo's
+# token/secrets even for fork PRs. That's only safe when the job never
+# checks out or executes code from the PR branch — and neither job here
+# does: both only call read-only GitHub REST APIs (listFiles, getContent,
+# issues.get) to build plain text (a scope report / an AI-review prompt)
+# and post it as a comment. See:
+# https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target
+#
+# The one real cost of pull_request_target: any fork author can trigger
+# this workflow repeatedly just by pushing commits (synchronize events),
+# and ai-review spends a Gemini call each time. Gating ai-review behind a
+# "trusted author" check (the usual advice) doesn't fit this repo — every
+# real contributor is an outside, first-time contributor by design (see
+# CONTRIBUTING.md), so that would just turn ai-review off for everyone it
+# exists for. Instead, ai-review only runs on `opened`/`reopened` (see its
+# `if:` below) — one review per PR lifecycle instead of one per push —
+# which removes the "push repeatedly to rack up calls" angle without
+# requiring a maintainer to manually unlock it per PR. scope-check stays
+# on all three events since it's free and deterministic, and should
+# re-check scope on every push.
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened]
 
 # Explicit deny-by-default at the workflow level — each job below grants
@@ -32,6 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
+      contents: read
     steps:
       - uses: actions/github-script@v7
         with:
@@ -59,6 +91,7 @@ jobs:
             const violations = [];
             let touchedSlug = null;
             let registryFile = null;
+            let metaFileAdded = false;
             const otherFiles = [];
 
             for (const f of files) {
@@ -76,17 +109,49 @@ jobs:
                 violations.push('touches files in both `src/tools/' + touchedSlug + '/` and `src/tools/' + slug + '/` — one PR should add exactly one tool');
               }
               touchedSlug = slug;
+              // The cheap signal for "this is a new tool": a newly-added meta.ts
+              // (see docs/ADDING_A_TOOL.md step 3).
+              if (f.filename === 'src/tools/' + slug + '/meta.ts' && f.status === 'added') {
+                metaFileAdded = true;
+              }
             }
 
             const touchesATool = touchedSlug !== null || registryFile !== null;
 
-            if (touchedSlug !== null && registryFile === null) {
-              violations.push('adds `src/tools/' + touchedSlug + '/` but never touches `src/tools/registry.ts` — a new tool needs exactly one added line there to register it');
+            // Resolve whether this is genuinely a *new* tool. Trust
+            // metaFileAdded when true — no need for an extra API call. Only
+            // when meta.ts wasn't part of the diff do we check whether the
+            // slug's folder already existed on the base branch: this covers
+            // both a new-tool PR that forgot meta.ts, and a polish PR that
+            // happens to *only* add new files (so every touched file in the
+            // diff looks "added" even though the tool itself isn't new).
+            let isNewTool = metaFileAdded;
+            if (touchedSlug && !isNewTool) {
+              try {
+                await github.rest.repos.getContent({
+                  ...context.repo, path: 'src/tools/' + touchedSlug, ref: pr.base.sha,
+                });
+                isNewTool = false; // folder already existed on the base branch
+              } catch (e) {
+                if (e.status === 404) {
+                  isNewTool = true; // folder doesn't exist on main yet — this PR introduces it
+                }
+                // any other error (rate limit, transient API issue): fall back
+                // to the meta.ts signal rather than failing scope-check over
+                // an unrelated hiccup.
+              }
+            }
+
+            if (touchedSlug !== null && registryFile === null && isNewTool) {
+              violations.push('adds `src/tools/' + touchedSlug + '/` but never touches `src/tools/registry.ts` — a new tool needs exactly one added registry entry there to register it');
             }
             if (registryFile !== null && touchedSlug === null) {
               violations.push('`src/tools/registry.ts` must be paired with exactly one tool folder');
             }
-            if (registryFile !== null) {
+            if (registryFile !== null && touchedSlug !== null && !isNewTool) {
+              violations.push('`src/tools/registry.ts` was modified, but `src/tools/' + touchedSlug + '/` isn\'t a new tool — only a brand-new tool needs to touch `registry.ts`; a polish/bugfix PR on an existing tool shouldn\'t');
+            }
+            if (registryFile !== null && isNewTool) {
               if (registryFile.status !== 'modified') {
                 violations.push('`src/tools/registry.ts` was ' + registryFile.status + ', expected a small modification (adding one entry)');
               } else if (registryFile.deletions > 0) {
@@ -102,12 +167,10 @@ jobs:
                   .replace(/\/\*[\s\S]*?\*\//g, ''); // strip multi-line comments
 
                 // Verify imports match the touchedSlug
-                if (touchedSlug) {
-                  const hasMetaImport = new RegExp(`import\\s+\\w+\\s+from\\s+['"]\\./${touchedSlug}/meta['"]`).test(addedText);
-                  const hasCompImport = new RegExp(`import\\s+\\w+\\s+from\\s+['"]\\./${touchedSlug}['"]`).test(addedText);
-                  if (!hasMetaImport || !hasCompImport) {
-                    violations.push('`src/tools/registry.ts` is missing required imports for `' + touchedSlug + '` (expected `./' + touchedSlug + '/meta` and `./' + touchedSlug + '`)');
-                  }
+                const hasMetaImport = new RegExp(`import\\s+\\w+\\s+from\\s+['"]\\./${touchedSlug}/meta['"]`).test(addedText);
+                const hasCompImport = new RegExp(`import\\s+\\w+\\s+from\\s+['"]\\./${touchedSlug}['"]`).test(addedText);
+                if (!hasMetaImport || !hasCompImport) {
+                  violations.push('`src/tools/registry.ts` is missing required imports for `' + touchedSlug + '` (expected `./' + touchedSlug + '/meta` and `./' + touchedSlug + '`)');
                 }
 
                 // Count valid registry entries (handles multiple on one line, ignores comments)
@@ -128,9 +191,11 @@ jobs:
             if (!touchesATool) {
               body = '✅ **Scope check passed** — no `src/tools/**` folder touched, so this isn\'t subject to the one-tool-per-PR rule (docs/infra/config change).';
             } else if (violations.length === 0) {
-              body = '✅ **Scope check passed** — this PR only touches `src/tools/' + touchedSlug + '/**` plus additions to `registry.ts`.';
+              body = isNewTool
+                ? '✅ **Scope check passed** — this PR only touches `src/tools/' + touchedSlug + '/**` plus one added registry entry in `registry.ts`.'
+                : '✅ **Scope check passed** — this PR only touches `src/tools/' + touchedSlug + '/**` (polish/bugfix on an existing tool).';
             } else {
-              body = '❌ **Scope check failed**:\n' + violations.map(v => '- ' + v).join('\n') + '\n\nSee [`docs/ADDING_A_TOOL.md`](' + repoUrl + '/blob/main/docs/ADDING_A_TOOL.md) — a tool PR should only touch its own folder plus one added line in the registry.';
+              body = '❌ **Scope check failed**:\n' + violations.map(v => '- ' + v).join('\n') + '\n\nSee [`docs/ADDING_A_TOOL.md`](' + repoUrl + '/blob/main/docs/ADDING_A_TOOL.md) — a tool PR should only touch its own folder plus, for new tools, one added registry entry.';
             }
 
             await github.rest.issues.createComment({
@@ -143,19 +208,31 @@ jobs:
 
   ai-review:
     name: ai-review
-    # Nothing meaningful for an AI review to say about a dependency bump.
-    if: github.actor != 'dependabot[bot]'
+    # Dependabot bumps get nothing useful from an AI review. Skipping
+    # `synchronize` (see the note at the top of this file) means this only
+    # runs once per PR lifecycle instead of once per push, which is what
+    # keeps a fork author from racking up Gemini calls just by pushing
+    # commits repeatedly.
+    if: github.actor != 'dependabot[bot]' && github.event.action != 'synchronize'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       issues: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
+      # No actions/checkout here on purpose: this job never reads from the
+      # local filesystem or runs any PR code — it only calls read-only
+      # GitHub REST APIs for the diff/issue text below. That's what keeps
+      # pull_request_target safe for this job (see the note at the top of
+      # this file) — there's nothing from the PR branch to execute.
+      #
+      # continue-on-error: this job is advisory only and should never show
+      # as a failing check — but an uncaught error (a network blip on the
+      # `fetch` call, a Gemini rate limit, a transient GitHub API error)
+      # would otherwise fail the step, and therefore the job, contradicting
+      # that. This keeps it non-blocking even if the call inside errors out.
       - uses: actions/github-script@v7
+        continue-on-error: true
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         with:

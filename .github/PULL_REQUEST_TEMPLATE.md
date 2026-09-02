@@ -27,8 +27,9 @@ For polish/bugfix PRs, be specific about the before/after behavior.
 ## Checklist
 
 **Scope** (check the option that applies; this is what the automated `scope-check` verifies)
-- [ ] This PR touches only `src/tools/<slug>/` for one tool, plus one added line in `src/tools/registry.ts`
-- [ ] This PR is documentation-only.
+- [ ] New tool: this PR touches only `src/tools/<slug>/` for one new tool, plus one added registry entry in `src/tools/registry.ts`
+- [ ] Polish/bugfix: this PR touches only `src/tools/<slug>/` for one existing tool — `registry.ts` isn't touched
+- [ ] This PR is documentation-only / infra-only (doesn't touch `src/tools/**`).
 - [ ] No unrelated files were touched (no drive-by formatting changes, no edits to other tools' folders)
 
 **Before opening this PR**

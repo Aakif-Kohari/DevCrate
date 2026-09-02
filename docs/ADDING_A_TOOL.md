@@ -4,7 +4,7 @@ This is the exact pattern every tool follows. Sticking to it is what lets automa
 
 ## The rule
 
-> A new-tool PR may only add files inside `src/tools/<your-slug>/`, and add **exactly one line** to `src/tools/registry.ts`. Nothing else.
+> A new-tool PR may only add files inside `src/tools/<your-slug>/`, and add **one registry entry** to `src/tools/registry.ts`. Nothing else.
 
 That's it. That one rule is what the automated scope check enforces.
 

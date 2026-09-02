@@ -10,15 +10,15 @@ reviewer). It's a free complement to the automated `scope-check` /
 
 DevCrate is a collection of small, self-contained developer utility tools.
 Each tool lives entirely in its own folder under `src/tools/<slug>/` and
-registers itself with exactly one added line in `src/tools/registry.ts`.
+registers itself with exactly one added entry in `src/tools/registry.ts`.
 Full pattern: `docs/ADDING_A_TOOL.md`.
 
 ## When reviewing a pull request, check for:
 
 1. **Scope** — the PR should only touch one `src/tools/<slug>/` folder. A
    brand-new tool (one that adds a new `meta.ts`) also needs one added
-   (never removed) line in `registry.ts`; a polish/bugfix PR on an
-   existing tool doesn't need to touch `registry.ts` at all. Flag
+   (never removed) registry entry in `registry.ts`; a polish/bugfix PR on
+   an existing tool doesn't need to touch `registry.ts` at all. Flag
    anything outside that scope.
 2. **Correctness** — does it do what the linked issue's acceptance criteria describe?
 3. **Safety** — does it avoid changing or removing anything unrelated to the issue?

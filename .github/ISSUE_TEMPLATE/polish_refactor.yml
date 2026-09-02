@@ -1,7 +1,7 @@
 name: Polish an Existing Tool
 description: Improve something that already exists — tests, accessibility, mobile layout, edge cases, small UX fixes. Not a new tool.
 title: "[Polish] "
-labels: ["good-first-issue", "polish"]
+labels: ["good first issue", "polish"]
 body:
   - type: input
     id: tool

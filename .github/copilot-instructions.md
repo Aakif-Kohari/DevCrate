@@ -15,8 +15,11 @@ Full pattern: `docs/ADDING_A_TOOL.md`.
 
 ## When reviewing a pull request, check for:
 
-1. **Scope** — the PR should only touch one `src/tools/<slug>/` folder plus
-   an added (never removed) line in `registry.ts`. Flag anything else.
+1. **Scope** — the PR should only touch one `src/tools/<slug>/` folder. A
+   brand-new tool (one that adds a new `meta.ts`) also needs one added
+   (never removed) line in `registry.ts`; a polish/bugfix PR on an
+   existing tool doesn't need to touch `registry.ts` at all. Flag
+   anything outside that scope.
 2. **Correctness** — does it do what the linked issue's acceptance criteria describe?
 3. **Safety** — does it avoid changing or removing anything unrelated to the issue?
 4. Tools are plain React function components, TypeScript, Tailwind for

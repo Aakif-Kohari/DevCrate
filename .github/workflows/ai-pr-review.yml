@@ -4,14 +4,33 @@ name: PR Checks — Scope + AI Review
 #
 # - scope-check: pure deterministic logic (no AI, no external calls,
 #   never flaky). Verifies the PR only touches one src/tools/<slug>/
-#   folder plus additions to registry.ts.
+#   folder, and — only when it's introducing a brand-new tool — that
+#   it's paired with exactly one added line in registry.ts.
 #
 # - ai-review: sanity-checks the diff against the linked issue.
 #   ADVISORY ONLY — it always succeeds as a job and never blocks a merge,
 #   it just posts a comment.
+#
+# Both jobs need a writable GITHUB_TOKEN (to comment), and ai-review also
+# needs the GEMINI_API_KEY secret. Every real contribution to this repo
+# comes from a fork (see CONTRIBUTING.md) — and GitHub deliberately hands
+# `pull_request`-triggered runs from forks a read-only token with NO
+# secrets. On plain `pull_request` that means both jobs below would 403
+# the moment they tried to comment (scope-check unconditionally comments,
+# even on a pass), and ai-review would never see GEMINI_API_KEY — i.e.
+# these checks would never actually work for an outside contributor,
+# only for pushes to a branch on this repo itself.
+#
+# We use `pull_request_target` instead, which runs with the base repo's
+# token/secrets even for fork PRs. That's only safe when the job never
+# checks out or executes code from the PR branch — and neither job here
+# does: both only call read-only GitHub REST APIs (listFiles, issues.get)
+# to build plain text (a scope report / an AI-review prompt) and post it
+# as a comment. See:
+# https://docs.github.com/en/actions/reference/security/securely-using-pull_request_target
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened]
 
 # Explicit deny-by-default at the workflow level — each job below grants
@@ -59,6 +78,7 @@ jobs:
             const violations = [];
             let touchedSlug = null;
             let registryFile = null;
+            let metaFileAdded = false;
             const otherFiles = [];
 
             for (const f of files) {
@@ -76,11 +96,18 @@ jobs:
                 violations.push('touches files in both `src/tools/' + touchedSlug + '/` and `src/tools/' + slug + '/` — one PR should add exactly one tool');
               }
               touchedSlug = slug;
+              // A brand-new tool always adds a new meta.ts (see docs/ADDING_A_TOOL.md
+              // step 3) — use that as the "this is a new tool" signal, so a
+              // polish/bugfix PR that only edits an *existing* tool's folder isn't
+              // wrongly told it needs to register anything in registry.ts.
+              if (f.filename === 'src/tools/' + slug + '/meta.ts' && f.status === 'added') {
+                metaFileAdded = true;
+              }
             }
 
             const touchesATool = touchedSlug !== null || registryFile !== null;
 
-            if (touchedSlug !== null && registryFile === null) {
+            if (touchedSlug !== null && registryFile === null && metaFileAdded) {
               violations.push('adds `src/tools/' + touchedSlug + '/` but never touches `src/tools/registry.ts` — a new tool needs exactly one added line there to register it');
             }
             if (registryFile !== null && touchedSlug === null) {
@@ -128,9 +155,11 @@ jobs:
             if (!touchesATool) {
               body = '✅ **Scope check passed** — no `src/tools/**` folder touched, so this isn\'t subject to the one-tool-per-PR rule (docs/infra/config change).';
             } else if (violations.length === 0) {
-              body = '✅ **Scope check passed** — this PR only touches `src/tools/' + touchedSlug + '/**` plus additions to `registry.ts`.';
+              body = metaFileAdded
+                ? '✅ **Scope check passed** — this PR only touches `src/tools/' + touchedSlug + '/**` plus additions to `registry.ts`.'
+                : '✅ **Scope check passed** — this PR only touches `src/tools/' + touchedSlug + '/**` (polish/bugfix on an existing tool).';
             } else {
-              body = '❌ **Scope check failed**:\n' + violations.map(v => '- ' + v).join('\n') + '\n\nSee [`docs/ADDING_A_TOOL.md`](' + repoUrl + '/blob/main/docs/ADDING_A_TOOL.md) — a tool PR should only touch its own folder plus one added line in the registry.';
+              body = '❌ **Scope check failed**:\n' + violations.map(v => '- ' + v).join('\n') + '\n\nSee [`docs/ADDING_A_TOOL.md`](' + repoUrl + '/blob/main/docs/ADDING_A_TOOL.md) — a tool PR should only touch its own folder plus, for new tools, one added line in the registry.';
             }
 
             await github.rest.issues.createComment({
@@ -151,10 +180,11 @@ jobs:
       issues: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
+      # No actions/checkout here on purpose: this job never reads from the
+      # local filesystem or runs any PR code — it only calls read-only
+      # GitHub REST APIs for the diff/issue text below. That's what keeps
+      # pull_request_target safe for this job (see the note at the top of
+      # this file) — there's nothing from the PR branch to execute.
       - uses: actions/github-script@v7
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

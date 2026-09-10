@@ -176,18 +176,28 @@ jobs:
                   .replace(/\/\/.*$/gm, '') // strip single-line comments
                   .replace(/\/\*[\s\S]*?\*\//g, ''); // strip multi-line comments
 
-                // Verify imports match the touchedSlug
-                const hasMetaImport = new RegExp(`import\\s+\\w+\\s+from\\s+['"]\\./${touchedSlug}/meta['"]`).test(addedText);
-                const hasCompImport = new RegExp(`import\\s+\\w+\\s+from\\s+['"]\\./${touchedSlug}['"]`).test(addedText);
-                if (!hasMetaImport || !hasCompImport) {
+                // Verify imports match the touchedSlug, and capture the actual
+                // imported identifiers (not just that *an* import exists) so the
+                // entry check below can confirm the added entry references
+                // *these* imports specifically — otherwise a PR could add
+                // correct-looking imports for the new tool but register an
+                // already-existing tool's identifiers in the entry itself.
+                const metaImportMatch = addedText.match(new RegExp(`import\\s+(\\w+)\\s+from\\s+['"]\\./${touchedSlug}/meta['"]`));
+                const compImportMatch = addedText.match(new RegExp(`import\\s+(\\w+)\\s+from\\s+['"]\\./${touchedSlug}['"]`));
+                if (!metaImportMatch || !compImportMatch) {
                   violations.push('`src/tools/registry.ts` is missing required imports for `' + touchedSlug + '` (expected `./' + touchedSlug + '/meta` and `./' + touchedSlug + '`)');
                 }
 
                 // Count valid registry entries (handles multiple on one line, ignores comments)
-                const entryRegex = /\{\s*meta\s*:\s*\w+\s*,\s*Component\s*:\s*\w+\s*,?\s*\}/g;
-                const entries = addedText.match(entryRegex) || [];
+                const entryRegex = /\{\s*meta\s*:\s*(\w+)\s*,\s*Component\s*:\s*(\w+)\s*,?\s*\}/g;
+                const entries = [...addedText.matchAll(entryRegex)];
                 if (entries.length !== 1) {
                   violations.push('`src/tools/registry.ts` has ' + entries.length + ' added registry entries — exactly one is expected per tool');
+                } else if (metaImportMatch && compImportMatch) {
+                  const [, entryMetaId, entryCompId] = entries[0];
+                  if (entryMetaId !== metaImportMatch[1] || entryCompId !== compImportMatch[1]) {
+                    violations.push('`src/tools/registry.ts`\'s added entry references `' + entryMetaId + '`/`' + entryCompId + '`, which don\'t match the `' + metaImportMatch[1] + '`/`' + compImportMatch[1] + '` imported for `' + touchedSlug + '` — the entry must register the tool you just imported');
+                  }
                 }
               }
             }

@@ -126,6 +126,7 @@ jobs:
             // happens to *only* add new files (so every touched file in the
             // diff looks "added" even though the tool itself isn't new).
             let isNewTool = metaFileAdded;
+            let lookupInconclusive = false;
             if (touchedSlug && !isNewTool) {
               try {
                 await github.rest.repos.getContent({
@@ -135,10 +136,19 @@ jobs:
               } catch (e) {
                 if (e.status === 404) {
                   isNewTool = true; // folder doesn't exist on main yet — this PR introduces it
+                } else {
+                  // A non-404 error means we genuinely can't tell whether this
+                  // is a new tool or not (rate limit, transient API issue).
+                  // We deliberately don't hard-fail scope-check over this: on
+                  // a busy day this path runs on every polish PR (it's only
+                  // skipped when meta.ts is already in the diff), so treating
+                  // an infra hiccup as a blocking scope violation would mean
+                  // innocent, correct polish PRs randomly fail with no
+                  // action the contributor can take about it. Instead we
+                  // surface the uncertainty in the comment below so a human
+                  // notices it rather than it being silently swallowed.
+                  lookupInconclusive = true;
                 }
-                // any other error (rate limit, transient API issue): fall back
-                // to the meta.ts signal rather than failing scope-check over
-                // an unrelated hiccup.
               }
             }
 
@@ -191,9 +201,13 @@ jobs:
             if (!touchesATool) {
               body = '✅ **Scope check passed** — no `src/tools/**` folder touched, so this isn\'t subject to the one-tool-per-PR rule (docs/infra/config change).';
             } else if (violations.length === 0) {
-              body = isNewTool
-                ? '✅ **Scope check passed** — this PR only touches `src/tools/' + touchedSlug + '/**` plus one added registry entry in `registry.ts`.'
-                : '✅ **Scope check passed** — this PR only touches `src/tools/' + touchedSlug + '/**` (polish/bugfix on an existing tool).';
+              if (isNewTool) {
+                body = '✅ **Scope check passed** — this PR only touches `src/tools/' + touchedSlug + '/**` plus one added registry entry in `registry.ts`.';
+              } else if (lookupInconclusive) {
+                body = '✅ **Scope check passed** — this PR only touches `src/tools/' + touchedSlug + '/**`. Note: a GitHub API lookup failed, so this couldn\'t confirm whether `src/tools/' + touchedSlug + '/` is a brand-new tool — if it is, please double-check it\'s registered in `src/tools/registry.ts` before merging.';
+              } else {
+                body = '✅ **Scope check passed** — this PR only touches `src/tools/' + touchedSlug + '/**` (polish/bugfix on an existing tool).';
+              }
             } else {
               body = '❌ **Scope check failed**:\n' + violations.map(v => '- ' + v).join('\n') + '\n\nSee [`docs/ADDING_A_TOOL.md`](' + repoUrl + '/blob/main/docs/ADDING_A_TOOL.md) — a tool PR should only touch its own folder plus, for new tools, one added registry entry.';
             }

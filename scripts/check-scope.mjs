@@ -92,6 +92,26 @@ if (touchesRegistry && touchedSlug === null) {
   )
 }
 
+// A registry.ts touch is only valid for a genuinely *new* tool. Unlike CI
+// (which uses "was meta.ts newly added" as a cheap signal, PR diff-status
+// isn't available locally), we can still answer "does this folder already
+// exist on main" directly with git — cheap and unambiguous, no API call
+// or inconclusive state to worry about.
+function toolFolderExistsOnBase(slug) {
+  try {
+    run(`git rev-parse --verify --quiet ${base}:src/tools/${slug}`)
+    return true
+  } catch {
+    return false
+  }
+}
+
+if (touchesRegistry && touchedSlug !== null && toolFolderExistsOnBase(touchedSlug)) {
+  violations.push(
+    `touches \`src/tools/registry.ts\`, but src/tools/${touchedSlug}/ already exists on ${base} — only a brand-new tool should touch registry.ts; a polish/bugfix PR on an existing tool shouldn't`,
+  )
+}
+
 if (otherFiles.length > 0) {
   violations.push(
     ...otherFiles.map(

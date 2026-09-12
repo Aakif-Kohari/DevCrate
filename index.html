@@ -3,7 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="DevCrate — a community-built crate of small, single-purpose developer utility tools, all in your browser."
+    />
+    <meta name="theme-color" content="#4f46e5" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
     <title>DevCrate — small tools, built by everyone</title>
+    <script>
+      // Applied before paint to avoid a light-mode flash on first load for
+      // users with a saved or system-level dark preference.
+      try {
+        const stored = localStorage.getItem('devcrate-theme')
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (stored === 'dark' || (!stored && prefersDark)) {
+          document.documentElement.classList.add('dark')
+        }
+      } catch {
+        /* localStorage unavailable (private mode, etc.) — default light theme is fine */
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

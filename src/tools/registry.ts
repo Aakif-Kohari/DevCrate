@@ -6,6 +6,7 @@
 // unless you are the one who added them.
 
 import type { ComponentType } from 'react'
+import type { CategorySlug } from './categories'
 import jsonFormatterMeta from './json-formatter/meta'
 import JsonFormatter from './json-formatter'
 
@@ -14,6 +15,8 @@ export interface ToolMeta {
   name: string
   description: string
   tags: string[]
+  /** Which category page this tool is grouped under — see tools/categories.ts. */
+  category: CategorySlug
 }
 
 export interface ToolEntry {
@@ -25,3 +28,11 @@ export const toolRegistry: ToolEntry[] = [
   { meta: jsonFormatterMeta, Component: JsonFormatter },
   // <-- new tools are registered below this line, one per PR -->
 ]
+
+export function getToolBySlug(slug: string): ToolEntry | undefined {
+  return toolRegistry.find((t) => t.meta.slug === slug)
+}
+
+export function getToolsByCategory(categorySlug: CategorySlug): ToolEntry[] {
+  return toolRegistry.filter((t) => t.meta.category === categorySlug)
+}

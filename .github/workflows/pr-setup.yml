@@ -1,0 +1,47 @@
+name: PR Setup — Label + Assign
+
+# Runs once when a PR is opened: tags it with the OSCI'26 event label and
+# assigns it to both the repo owner and whoever opened the PR, so every PR
+# starts with an owner and the right label without anyone doing it by hand.
+#
+# pull_request_target, not pull_request: every real contribution here comes
+# from a fork (see CONTRIBUTING.md), and a fork's pull_request token is
+# read-only with no way to add a label or assignee — see the note at the
+# top of ai-pr-review.yml for the full explanation of why. Safe here for
+# the same reason as there: no checkout, no code execution, just two
+# metadata API calls.
+
+on:
+  pull_request_target:
+    types: [opened]
+
+permissions: {}
+
+jobs:
+  setup:
+    name: setup
+    # Dependabot PRs get their own "infra" label via dependabot.yml already,
+    # and assigning a bot as an assignee isn't meaningful — this is for
+    # human contributor PRs.
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.0.1
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const author = pr.user.login;
+            const owner = context.repo.owner;
+
+            await github.rest.issues.addLabels({
+              ...context.repo, issue_number: pr.number, labels: ["OSCI'26"],
+            });
+
+            // De-dupe for the case where the PR author is the repo owner.
+            const assignees = [...new Set([owner, author])];
+            await github.rest.issues.addAssignees({
+              ...context.repo, issue_number: pr.number, assignees,
+            });

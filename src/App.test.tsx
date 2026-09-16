@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, within, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import App from './App'
 import { ThemeProvider } from './lib/ThemeProvider'
@@ -62,6 +62,24 @@ describe('App routing', () => {
   it('renders a 404 page for an unmatched route', () => {
     const main = renderAt('/this/route/does/not/exist')
     expect(main.getByText('Page not found')).toBeTruthy()
+  })
+
+  it('updates All Tools results when the URL q param changes without unmounting the page', () => {
+    // Regression test: AllToolsPage stays mounted across /tools <->
+    // /tools?q=... (same route, just a query-string change), so its query
+    // state has to re-sync from searchParams via an effect, not just a
+    // useState initializer that only runs once on mount. Exercises the
+    // real flow: submit the header search with no live-preview matches,
+    // which navigates to /tools?q=<query> as a fallback.
+    renderAt('/tools')
+    expect(screen.getAllByText('JSON Formatter').length).toBeGreaterThan(0)
+
+    const searchInputs = screen.getAllByPlaceholderText('Search tools…')
+    fireEvent.change(searchInputs[0], { target: { value: 'zzz-no-such-tool' } })
+    fireEvent.submit(searchInputs[0].closest('form')!)
+
+    const main = within(screen.getByRole('main'))
+    expect(main.getByText(/no tools match/i)).toBeTruthy()
   })
 
   it('renders the sidebar navigation alongside every page', () => {

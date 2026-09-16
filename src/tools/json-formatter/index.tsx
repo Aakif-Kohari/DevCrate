@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react'
 
 // Reference implementation — copy this folder's shape for new tools.
 // Keep tools self-contained: no imports from other tools, no new
-// dependencies without discussing it in the issue first.
+// dependencies without discussing it in the issue first. Use the
+// border/card/muted/foreground design tokens (not hardcoded gray-*/
+// indigo-* colors) so the tool follows light/dark theme automatically.
 export default function JsonFormatter() {
   const [input, setInput] = useState('')
 
@@ -17,24 +19,36 @@ export default function JsonFormatter() {
   }, [input])
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <div>
-        <label className="block text-sm font-medium mb-1">Input</label>
+        <label htmlFor="json-formatter-input" className="mb-1 block text-sm font-medium">
+          Input
+        </label>
         <textarea
-          className="w-full h-72 rounded-lg border border-gray-300 p-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          id="json-formatter-input"
+          className="focus-ring h-72 w-full rounded-lg border border-border bg-card p-3 font-mono text-sm text-card-foreground"
           placeholder='{"paste": "your JSON here"}'
           value={input}
           onChange={(e) => setInput(e.target.value)}
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">{error ? 'Error' : 'Formatted'}</label>
+        <label id="json-formatter-output-label" className="mb-1 block text-sm font-medium">
+          {error ? 'Error' : 'Formatted'}
+        </label>
         {error ? (
-          <div className="w-full h-72 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700 overflow-auto">
+          <div
+            role="alert"
+            aria-labelledby="json-formatter-output-label"
+            className="h-72 w-full overflow-auto rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
+          >
             {error}
           </div>
         ) : (
-          <pre className="w-full h-72 rounded-lg border border-gray-300 bg-gray-50 p-3 font-mono text-sm overflow-auto">
+          <pre
+            aria-labelledby="json-formatter-output-label"
+            className="h-72 w-full overflow-auto rounded-lg border border-border bg-muted p-3 font-mono text-sm"
+          >
             {formatted}
           </pre>
         )}

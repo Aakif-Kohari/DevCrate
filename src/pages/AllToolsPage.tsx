@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Search } from 'lucide-react'
@@ -15,6 +15,16 @@ const item = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }
 export default function AllToolsPage() {
   const [searchParams] = useSearchParams()
   const [query, setQuery] = useState(searchParams.get('q') ?? '')
+
+  // AllToolsPage stays mounted across /tools <-> /tools?q=... navigations
+  // (same route, just a query-string change), so useState's initializer
+  // only fires once on first mount and won't pick up a later q param on
+  // its own — e.g. arriving here via the header search box's "no live
+  // matches, jump to full results" fallback. Keep query in sync whenever
+  // the URL's q param changes.
+  useEffect(() => {
+    setQuery(searchParams.get('q') ?? '')
+  }, [searchParams])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -46,7 +56,7 @@ export default function AllToolsPage() {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Filter by name, tag, or description…"
           aria-label="Filter tools"
-          className="focus-ring w-full rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-sm text-card-foreground placeholder:text-muted-foreground"
+          className="focus-ring w-full rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-base text-card-foreground placeholder:text-muted-foreground sm:text-sm"
         />
       </div>
 

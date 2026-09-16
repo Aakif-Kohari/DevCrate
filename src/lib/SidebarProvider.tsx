@@ -19,17 +19,19 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     setMobileOpen(false)
   }, [location.pathname])
 
-  const toggleCollapsed = () => {
-    setCollapsed((prev) => {
-      const next = !prev
-      try {
-        window.localStorage.setItem(SIDEBAR_STORAGE_KEY, next ? '1' : '0')
-      } catch {
-        // storage unavailable — collapse state just won't persist across reloads
-      }
-      return next
-    })
-  }
+  // Persist collapse state as a side effect of the value changing, not
+  // inside the state updater itself — updater functions are meant to be
+  // pure (React 18 StrictMode double-invokes them specifically to catch
+  // this), even though writing the same value twice here was harmless.
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(SIDEBAR_STORAGE_KEY, isCollapsed ? '1' : '0')
+    } catch {
+      // storage unavailable — collapse state just won't persist across reloads
+    }
+  }, [isCollapsed])
+
+  const toggleCollapsed = () => setCollapsed((prev) => !prev)
 
   return (
     <SidebarContext.Provider value={{ isMobileOpen, setMobileOpen, isCollapsed, toggleCollapsed }}>

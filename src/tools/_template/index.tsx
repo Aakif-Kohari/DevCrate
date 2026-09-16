@@ -20,8 +20,11 @@ export default function TemplateTool() {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <div>
-        <label className="mb-1 block text-sm font-medium">Input</label>
+        <label htmlFor="template-input" className="mb-1 block text-sm font-medium">
+          Input
+        </label>
         <textarea
+          id="template-input"
           className="focus-ring h-72 w-full rounded-lg border border-border bg-card p-3 font-mono text-sm text-card-foreground"
           placeholder="Type or paste something here"
           value={input}
@@ -29,8 +32,13 @@ export default function TemplateTool() {
         />
       </div>
       <div>
-        <label className="mb-1 block text-sm font-medium">Output</label>
-        <pre className="h-72 w-full overflow-auto rounded-lg border border-border bg-muted p-3 font-mono text-sm">
+        <label id="template-output-label" className="mb-1 block text-sm font-medium">
+          Output
+        </label>
+        <pre
+          aria-labelledby="template-output-label"
+          className="h-72 w-full overflow-auto rounded-lg border border-border bg-muted p-3 font-mono text-sm"
+        >
           {output}
         </pre>
       </div>

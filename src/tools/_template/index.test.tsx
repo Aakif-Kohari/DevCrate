@@ -15,7 +15,10 @@ describe('TemplateTool', () => {
   it('renders an empty output for empty input instead of crashing', () => {
     render(<TemplateTool />)
     const textarea = screen.getByPlaceholderText(/type or paste/i)
+    fireEvent.change(textarea, { target: { value: 'abc' } })
+    expect(screen.getByText('cba')).toBeTruthy()
     fireEvent.change(textarea, { target: { value: '' } })
     expect((textarea as HTMLTextAreaElement).value).toBe('')
+    expect(screen.queryByText('cba')).toBeNull()
   })
 })

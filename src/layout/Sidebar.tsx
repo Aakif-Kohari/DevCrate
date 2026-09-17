@@ -1,9 +1,11 @@
+import { useRef } from 'react'
 import { NavLink } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Home, LayoutGrid, Wrench, PanelLeftClose, PanelLeft, X } from 'lucide-react'
 import { categories } from '../tools/categories'
 import { getToolsByCategory } from '../tools/registry'
 import { useSidebar } from '../lib/useSidebar'
+import { useFocusTrap } from '../lib/useFocusTrap'
 
 function SidebarContent({ collapsed }: { collapsed: boolean }) {
   const linkClasses = ({ isActive }: { isActive: boolean }) =>
@@ -13,19 +15,25 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
         : 'text-muted-foreground hover:bg-muted hover:text-foreground'
     }`
 
+  // When collapsed, labels are visually hidden (sr-only) rather than left
+  // out of the DOM entirely — an icon-only nav still needs an accessible
+  // name for screen reader users, who don't benefit from "it's just an
+  // icon, the meaning is obvious visually".
+  const labelClasses = collapsed ? 'sr-only' : ''
+
   return (
     <nav className="flex h-full flex-col gap-1 overflow-y-auto px-3 py-4">
       <NavLink to="/" end className={linkClasses}>
         <Home size={17} className="shrink-0" />
-        {!collapsed && <span>Home</span>}
+        <span className={labelClasses}>Home</span>
       </NavLink>
       <NavLink to="/categories" className={linkClasses}>
         <LayoutGrid size={17} className="shrink-0" />
-        {!collapsed && <span>Categories</span>}
+        <span className={labelClasses}>Categories</span>
       </NavLink>
       <NavLink to="/tools" className={linkClasses}>
         <Wrench size={17} className="shrink-0" />
-        {!collapsed && <span>All Tools</span>}
+        <span className={labelClasses}>All Tools</span>
       </NavLink>
 
       {!collapsed && (
@@ -58,6 +66,13 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
 
 export default function Sidebar() {
   const { isMobileOpen, setMobileOpen, isCollapsed, toggleCollapsed } = useSidebar()
+  const drawerRef = useRef<HTMLElement | null>(null)
+  const closeDrawer = () => setMobileOpen(false)
+
+  // Modal-dialog keyboard behavior for the mobile drawer: focus moves in
+  // on open, Tab is trapped inside it, Escape closes it, and focus is
+  // restored to the hamburger button on close.
+  useFocusTrap(drawerRef, isMobileOpen, closeDrawer)
 
   return (
     <>
@@ -86,11 +101,15 @@ export default function Sidebar() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setMobileOpen(false)}
+              onClick={closeDrawer}
               className="fixed inset-0 z-40 bg-black/40 md:hidden"
               aria-hidden="true"
             />
             <motion.aside
+              ref={drawerRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Menu"
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
@@ -101,7 +120,7 @@ export default function Sidebar() {
                 <span className="font-semibold">Menu</span>
                 <button
                   type="button"
-                  onClick={() => setMobileOpen(false)}
+                  onClick={closeDrawer}
                   aria-label="Close menu"
                   className="focus-ring rounded-lg p-1.5 text-muted-foreground hover:bg-muted"
                 >

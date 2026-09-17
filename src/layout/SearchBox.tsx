@@ -64,7 +64,7 @@ export default function SearchBox() {
           onFocus={() => setIsFocused(true)}
           placeholder="Search tools…"
           aria-label="Search tools"
-          className="focus-ring w-full rounded-lg border border-border bg-card py-1.5 pl-8 pr-8 text-sm text-card-foreground placeholder:text-muted-foreground"
+          className="focus-ring w-full rounded-lg border border-border bg-card py-1.5 pl-8 pr-8 text-base text-card-foreground sm:text-sm placeholder:text-muted-foreground"
         />
         {query && (
           <button
@@ -79,7 +79,7 @@ export default function SearchBox() {
       </form>
 
       {showDropdown && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1.5 overflow-hidden rounded-lg border border-border bg-card shadow-lg animate-fade-in">
+        <div className="absolute left-0 right-0 top-full z-50 mt-1.5 overflow-hidden rounded-lg border border-border bg-card shadow-lg motion-safe:animate-fade-in">
           {matches.length === 0 ? (
             <p className="px-3 py-2.5 text-sm text-muted-foreground">No tools match "{query}"</p>
           ) : (

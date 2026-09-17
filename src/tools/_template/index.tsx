@@ -25,7 +25,7 @@ export default function TemplateTool() {
         </label>
         <textarea
           id="template-input"
-          className="focus-ring h-72 w-full rounded-lg border border-border bg-card p-3 font-mono text-sm text-card-foreground"
+          className="focus-ring h-72 w-full rounded-lg border border-border bg-card p-3 font-mono text-base text-card-foreground sm:text-sm"
           placeholder="Type or paste something here"
           value={input}
           onChange={(e) => setInput(e.target.value)}

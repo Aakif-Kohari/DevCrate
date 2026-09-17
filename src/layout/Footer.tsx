@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import GitHubIcon from '../components/icons/GitHubIcon'
+import Logo from '../components/icons/Logo'
 
 export default function Footer() {
   return (
@@ -7,7 +8,7 @@ export default function Footer() {
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <Link to="/" className="focus-ring flex items-center gap-2 rounded-lg">
-            <span className="text-lg">🧰</span>
+            <Logo className="h-6 w-6 shrink-0" />
             <span className="font-bold tracking-tight">DevCrate</span>
           </Link>
           <p className="mt-2 max-w-xs text-sm text-muted-foreground">

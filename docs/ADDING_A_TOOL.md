@@ -53,8 +53,8 @@ That's it. That one rule is what the automated scope check enforces.
 ## Good tool ideas, by category
 
 - **Text & String**: case converter, slugify, Lorem Ipsum generator, text diff checker
-- **Data & Format**: CSV↔JSON converter, Base64 encode/decode, Markdown previewer
-- **Encoding & Security**: JWT decoder, hash generator (MD5/SHA), password generator
+- **Data & Format**: CSV↔JSON converter, Markdown previewer
+- **Encoding & Security**: JWT decoder, hash generator (MD5/SHA), password generator, Base64 encode/decode
 - **Web & Design**: color format converter (HEX/RGB/HSL), QR code generator
 - **Date & Time**: timestamp converter, cron expression parser
 - **Developer Utilities**: regex tester, Unix permission calculator, URL encode/decode

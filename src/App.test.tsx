@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen, within, fireEvent } from '@testing-library/react'
+import { render, screen, within, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import App from './App'
 import { ThemeProvider } from './lib/ThemeProvider'
@@ -88,5 +88,26 @@ describe('App routing', () => {
     expect(homeLinks.length).toBeGreaterThan(0)
     const nav = homeLinks[0].closest('nav')
     expect(nav && within(nav).getByText('All Tools')).toBeTruthy()
+  })
+
+  it('mobile menu traps focus, closes on Escape, and restores focus to the trigger', async () => {
+    renderAt('/')
+    const openButton = screen.getByRole('button', { name: 'Open menu' })
+    openButton.focus()
+    fireEvent.click(openButton)
+
+    const dialog = screen.getByRole('dialog', { name: 'Menu' })
+    expect(dialog).toBeTruthy()
+    // Focus should have moved into the dialog (its first focusable element).
+    expect(dialog.contains(document.activeElement)).toBe(true)
+
+    fireEvent.keyDown(document, { key: 'Escape' })
+    // Focus restoration happens synchronously with the state update, but
+    // the dialog's own removal from the DOM waits on framer-motion's exit
+    // animation (AnimatePresence keeps it mounted until that finishes).
+    expect(document.activeElement).toBe(openButton)
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Menu' })).toBeNull()
+    })
   })
 })

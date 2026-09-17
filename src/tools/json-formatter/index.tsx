@@ -26,7 +26,7 @@ export default function JsonFormatter() {
         </label>
         <textarea
           id="json-formatter-input"
-          className="focus-ring h-72 w-full rounded-lg border border-border bg-card p-3 font-mono text-sm text-card-foreground"
+          className="focus-ring h-72 w-full rounded-lg border border-border bg-card p-3 font-mono text-base text-card-foreground sm:text-sm"
           placeholder='{"paste": "your JSON here"}'
           value={input}
           onChange={(e) => setInput(e.target.value)}

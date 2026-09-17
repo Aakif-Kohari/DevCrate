@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Menu, Star } from 'lucide-react'
 import GitHubIcon from '../components/icons/GitHubIcon'
+import Logo from '../components/icons/Logo'
 import ThemeToggle from './ThemeToggle'
 import SearchBox from './SearchBox'
 import { useSidebar } from '../lib/useSidebar'
@@ -19,8 +20,12 @@ export default function Header() {
         <Menu size={20} />
       </button>
 
-      <Link to="/" className="focus-ring flex shrink-0 items-center gap-2 rounded-lg">
-        <span className="text-xl">🧰</span>
+      <Link
+        to="/"
+        aria-label="DevCrate home"
+        className="focus-ring flex shrink-0 items-center gap-2 rounded-lg"
+      >
+        <Logo className="h-7 w-7 shrink-0" />
         <span className="hidden text-base font-bold tracking-tight sm:inline">DevCrate</span>
       </Link>
 

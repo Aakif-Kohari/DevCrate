@@ -69,7 +69,7 @@
   }
 
   /* Plain-CSS motion (smooth scroll, the theme-change color transition)
-     isn't covered by framer-motion's MotionConfig in main.tsx — that only
+     isn't covered by framer-motion's MotionConfig in RootLayout — that only
      governs framer-motion's own animations. Disable both for anyone who's
      asked their OS for reduced motion. */
   @media (prefers-reduced-motion: reduce) {

@@ -15,7 +15,8 @@ const item = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }
 /** Lists every registered tool and filters the list by the active query. */
 export default function AllToolsPage() {
   const [searchParams] = useSearchParams()
-  const [query, setQuery] = useState(searchParams.get('q') ?? '')
+  const queryParam = searchParams.get('q')
+  const [query, setQuery] = useState(queryParam ?? '')
 
   // AllToolsPage stays mounted across /tools <-> /tools?q=... navigations
   // (same route, just a query-string change), so useState's initializer
@@ -24,8 +25,8 @@ export default function AllToolsPage() {
   // matches, jump to full results" fallback. Keep query in sync whenever
   // the URL's q param changes.
   useEffect(() => {
-    setQuery(searchParams.get('q') ?? '')
-  }, [searchParams])
+    setQuery(queryParam ?? '')
+  }, [queryParam])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()

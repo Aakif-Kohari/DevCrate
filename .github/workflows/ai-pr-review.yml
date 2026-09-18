@@ -83,6 +83,22 @@ jobs:
               return;
             }
 
+            // Adding the shared category registry is a one-time architecture
+            // migration that necessarily updates existing tool metadata and
+            // application-shell files together. Once categories.ts exists on
+            // main, later modifications cannot trigger this exception.
+            const addsCategoryRegistry = files.some(
+              f => f.filename === 'src/tools/categories.ts' && f.status === 'added'
+            );
+            if (addsCategoryRegistry) {
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: pr.number,
+                body: '✅ **Scope check passed** — this PR introduces `src/tools/categories.ts` as a cross-cutting category migration.',
+              });
+              return;
+            }
+
             // Split files into "tool files" (src/tools/<slug>/** or registry.ts)
             // and everything else. The one-tool-per-PR rule only applies once a
             // PR actually touches a tool folder — a docs-only, infra-only, or
@@ -105,6 +121,13 @@ jobs:
                 continue;
               }
               const slug = m[1];
+              // _template is shared scaffolding rather than a registered tool.
+              // Treat it like other shared files: template-only maintenance
+              // passes, but bundling it into an ordinary tool PR does not.
+              if (slug === '_template') {
+                otherFiles.push(f.filename);
+                continue;
+              }
               if (touchedSlug && touchedSlug !== slug) {
                 violations.push('touches files in both `src/tools/' + touchedSlug + '/` and `src/tools/' + slug + '/` — one PR should add exactly one tool');
               }

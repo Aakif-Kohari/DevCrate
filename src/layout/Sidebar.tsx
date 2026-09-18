@@ -80,7 +80,7 @@ export default function Sidebar() {
     <>
       {/* Desktop rail — collapses to icon-only width, slides via width transition */}
       <aside
-        className={`sticky top-14 hidden h-[calc(100vh-3.5rem)] shrink-0 border-r border-border bg-background transition-[width] duration-200 ease-in-out md:block ${
+        className={`sticky top-14 hidden h-[calc(100vh-3.5rem)] shrink-0 border-r border-border bg-background transition-[width] duration-200 ease-in-out motion-reduce:transition-none md:block ${
           isCollapsed ? 'w-14' : 'w-64'
         }`}
       >

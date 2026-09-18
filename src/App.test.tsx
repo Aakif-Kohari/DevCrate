@@ -81,6 +81,9 @@ describe('App routing', () => {
 
     const main = within(screen.getByRole('main'))
     expect(main.getByText(/no tools match/i)).toBeTruthy()
+
+    fireEvent.click(screen.getAllByRole('link', { name: 'All Tools' })[0])
+    expect(main.getByText('JSON Formatter')).toBeTruthy()
   })
 
   it('renders the sidebar navigation alongside every page', () => {

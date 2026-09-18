@@ -8,6 +8,13 @@ This is the exact pattern every tool follows. Sticking to it is what lets automa
 
 That's it. That one rule is what the automated scope check enforces.
 
+`src/tools/_template/` is shared contributor scaffolding, not a tool slug, so a
+template-only maintenance PR is outside the one-tool rule. Keep template edits
+out of individual tool PRs. The check also has a one-time exception for the
+architecture migration that first adds `src/tools/categories.ts`, because that
+change must update the shared shell and existing tool metadata together; later
+category changes do not receive that exception.
+
 ## Steps
 
 1. **Pick a slug** — lowercase, hyphenated (`base64-encoder`, `regex-tester`, `uuid-generator`).
@@ -45,7 +52,7 @@ That's it. That one rule is what the automated scope check enforces.
 
 ## What gets checked automatically
 
-- **Scope**: if your PR touches a `src/tools/<slug>/**` folder at all, it must stay to exactly one tool's folder (fails if it also touches another tool's folder or unrelated files). If you're adding a **new** tool (i.e. adding a new `meta.ts`), it also needs the matching entry in `registry.ts`, and that entry has to actually register the tool you imported — the tool has to genuinely appear in `toolRegistry`, and reference the exact identifiers you imported. A **polish/bugfix** PR on an existing tool doesn't need to touch `registry.ts` at all. PRs that don't touch `src/tools/` at all — docs, infra, config — aren't subject to this rule.
+- **Scope**: if your PR touches a `src/tools/<slug>/**` folder at all, it must stay to exactly one tool's folder (fails if it also touches another tool's folder or unrelated files). The shared `_template` folder is not considered a tool, but its maintenance must stay separate from a tool submission. If you're adding a **new** tool (i.e. adding a new `meta.ts`), it also needs the matching entry in `registry.ts`, and that entry has to actually register the tool you imported — the tool has to genuinely appear in `toolRegistry`, and reference the exact identifiers you imported. A **polish/bugfix** PR on an existing tool doesn't need to touch `registry.ts` at all. PRs that don't touch a real tool folder at all — template maintenance, docs, infra, config — aren't subject to this rule. The one-time migration that introduces `src/tools/categories.ts` is also exempt so it can update existing metadata and shared application code together.
 - **Build**: does `npm run build` succeed?
 - **Lint**: does the code pass ESLint?
 - **Relevance / correctness**: does the implementation actually do what the linked issue described? Is it a duplicate of an existing tool?

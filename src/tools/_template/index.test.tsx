@@ -19,6 +19,7 @@ describe('TemplateTool', () => {
     expect(screen.getByText('cba')).toBeTruthy()
     fireEvent.change(textarea, { target: { value: '' } })
     expect((textarea as HTMLTextAreaElement).value).toBe('')
-    expect(screen.queryByText('cba')).toBeNull()
+    const output = screen.getByLabelText('Output', { selector: 'pre' })
+    expect(output.textContent).toBe('')
   })
 })

@@ -56,10 +56,14 @@ jobs:
                 await github.rest.repos.checkCollaborator({ ...context.repo, username: author });
                 assignees.add(author);
               } catch (e) {
-                // 404 = not a collaborator, which GitHub requires for a
-                // valid assignee. Expected for most contributor PRs, not
-                // an error condition.
-                core.info(`${author} isn't a repo collaborator, so GitHub won't allow assigning them — only ${owner} will be assigned.`);
+                if (e.status === 404) {
+                  // 404 = not a collaborator, which GitHub requires for a
+                  // valid assignee. Expected for most contributor PRs, not
+                  // an error condition.
+                  core.info(`${author} isn't a repo collaborator, so GitHub won't allow assigning them — only ${owner} will be assigned.`);
+                } else {
+                  throw e;
+                }
               }
             }
 

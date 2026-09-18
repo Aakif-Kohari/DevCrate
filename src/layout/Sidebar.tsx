@@ -7,6 +7,7 @@ import { getToolsByCategory } from '../tools/registry'
 import { useSidebar } from '../lib/useSidebar'
 import { useFocusTrap } from '../lib/useFocusTrap'
 
+/** Renders sidebar navigation in expanded or icon-only form. */
 function SidebarContent({ collapsed }: { collapsed: boolean }) {
   const linkClasses = ({ isActive }: { isActive: boolean }) =>
     `focus-ring flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors ${
@@ -64,6 +65,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
   )
 }
 
+/** Renders responsive desktop and modal mobile navigation. */
 export default function Sidebar() {
   const { isMobileOpen, setMobileOpen, isCollapsed, toggleCollapsed } = useSidebar()
   const drawerRef = useRef<HTMLElement | null>(null)

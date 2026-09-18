@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import GitHubIcon from '../components/icons/GitHubIcon'
 import Logo from '../components/icons/Logo'
 
+/** Renders project navigation and contribution links below every page. */
 export default function Footer() {
   return (
     <footer className="border-t border-border bg-background">

@@ -1,6 +1,7 @@
-// lucide-react dropped brand/logo icons, so the GitHub mark is inlined here
-// as a plain SVG using currentColor (respects text color and dark mode
-// automatically, same as any lucide icon would).
+/**
+ * Renders the GitHub mark with `currentColor` so it follows the active theme.
+ * The mark is inlined because lucide-react does not provide brand icons.
+ */
 export default function GitHubIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">

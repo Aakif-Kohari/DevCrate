@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react'
 
-// Reference implementation — copy this folder's shape for new tools.
-// Keep tools self-contained: no imports from other tools, no new
-// dependencies without discussing it in the issue first. Use the
-// border/card/muted/foreground design tokens (not hardcoded gray-*/
-// indigo-* colors) so the tool follows light/dark theme automatically.
+/**
+ * Formats valid JSON and reports parse errors without leaving the page.
+ * This component is also the reference implementation for new tools.
+ */
 export default function JsonFormatter() {
   const [input, setInput] = useState('')
 

@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom'
 import App from './App'
 import { ThemeProvider } from './lib/ThemeProvider'
 
+/** Renders the application at a route and scopes queries to its main content. */
 function renderAt(path: string) {
   render(
     <MemoryRouter initialEntries={[path]}>

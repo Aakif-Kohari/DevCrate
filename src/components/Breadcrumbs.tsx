@@ -6,6 +6,7 @@ export interface Crumb {
   to?: string
 }
 
+/** Renders an accessible trail of links ending at the current page. */
 export default function Breadcrumbs({ items }: { items: Crumb[] }) {
   return (
     <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-1.5 text-sm">

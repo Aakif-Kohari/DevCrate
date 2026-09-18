@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import type { ToolMeta } from '../tools/registry'
 
+/** Displays a tool summary that links to the tool's page. */
 export default function ToolCard({ meta }: { meta: ToolMeta }) {
   return (
     <motion.div whileHover={{ y: -3 }} transition={{ duration: 0.15 }}>

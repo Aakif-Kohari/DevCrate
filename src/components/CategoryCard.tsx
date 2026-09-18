@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import type { Category } from '../tools/categories'
 
+/** Displays a category summary that links to its tool listing. */
 export default function CategoryCard({
   category,
   toolCount,

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Search, X } from 'lucide-react'
 import { toolRegistry } from '../tools/registry'
 
+/** Provides global tool search with live suggestions and route navigation. */
 export default function SearchBox() {
   const [query, setQuery] = useState('')
   const [isFocused, setIsFocused] = useState(false)
@@ -23,6 +24,7 @@ export default function SearchBox() {
   }, [query])
 
   useEffect(() => {
+    /** Closes search suggestions when a pointer interaction occurs outside the search. */
     function onClickOutside(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setIsFocused(false)
@@ -32,12 +34,14 @@ export default function SearchBox() {
     return () => document.removeEventListener('mousedown', onClickOutside)
   }, [])
 
+  /** Clears the search state and navigates to the selected tool. */
   function goToTool(slug: string) {
     setQuery('')
     setIsFocused(false)
     navigate(`/tools/${slug}`)
   }
 
+  /** Opens the best match or forwards the query to the full tools page. */
   function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (matches.length > 0) {

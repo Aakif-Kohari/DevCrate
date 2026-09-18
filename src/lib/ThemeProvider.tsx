@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { ThemeContext, THEME_STORAGE_KEY, type Theme } from './ThemeContext'
 
+/** Resolves the initial theme from storage before falling back to the system preference. */
 function getInitialTheme(): Theme {
   if (typeof window === 'undefined') return 'light'
   try {
@@ -13,6 +14,7 @@ function getInitialTheme(): Theme {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
+/** Provides theme state and keeps the document and stored preference in sync. */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(getInitialTheme)
 

@@ -11,6 +11,7 @@ const container = {
 }
 const item = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }
 
+/** Lists tools in the selected category or redirects invalid category routes. */
 export default function CategoryToolsPage() {
   const { categorySlug } = useParams<{ categorySlug: string }>()
   const category = categorySlug ? getCategory(categorySlug) : undefined

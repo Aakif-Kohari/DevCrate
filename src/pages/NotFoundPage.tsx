@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 
+/** Renders a recovery link for routes that do not match a page. */
 export default function NotFoundPage() {
   return (
     <div className="flex flex-col items-center gap-4 py-24 text-center">

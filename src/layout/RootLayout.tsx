@@ -6,6 +6,7 @@ import Footer from './Footer'
 import PageTransition from '../components/PageTransition'
 import { SidebarProvider } from '../lib/SidebarProvider'
 
+/** Composes the shared shell around each routed page. */
 export default function RootLayout() {
   const location = useLocation()
 

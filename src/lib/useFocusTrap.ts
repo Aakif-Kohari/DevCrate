@@ -31,6 +31,7 @@ export function useFocusTrap(
 
     getFocusable()[0]?.focus()
 
+    /** Handles Escape dismissal and cycles Tab focus within the active container. */
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         onClose()

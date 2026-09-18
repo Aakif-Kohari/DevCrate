@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
 import { SidebarContext, SIDEBAR_STORAGE_KEY } from './SidebarContext'
 
+/** Provides responsive sidebar state and persists the desktop preference. */
 export function SidebarProvider({ children }: { children: ReactNode }) {
   const [isMobileOpen, setMobileOpen] = useState(false)
   const [isCollapsed, setCollapsed] = useState(() => {

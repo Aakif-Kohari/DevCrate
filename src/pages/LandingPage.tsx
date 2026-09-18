@@ -16,6 +16,7 @@ const item = {
   show: { opacity: 1, y: 0 },
 }
 
+/** Renders the landing page with featured tools, categories, and contribution links. */
 export default function LandingPage() {
   const featuredTools = toolRegistry.slice(0, 6)
 

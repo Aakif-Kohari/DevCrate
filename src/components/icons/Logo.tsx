@@ -1,8 +1,7 @@
-// The DevCrate mark: a simple toolbox badge in the brand's primary indigo.
-// Kept as a static brand color (not the --primary CSS variable) since a
-// logo should read the same in light and dark mode, matching the favicon
-// (public/favicon.svg) and the theme-color meta tag in index.html — all
-// three need to agree, so this is the one source of truth for the shape.
+/**
+ * Renders the DevCrate toolbox mark with the same static colors as the favicon.
+ * The fixed palette keeps the brand consistent across light and dark themes.
+ */
 export default function Logo({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 40 40" className={className} aria-hidden="true">

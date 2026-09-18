@@ -5,6 +5,7 @@
 
 import { useMemo, useState } from 'react'
 
+/** Demonstrates the self-contained input/output structure expected of a tool. */
 export default function TemplateTool() {
   const [input, setInput] = useState('')
 

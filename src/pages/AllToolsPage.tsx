@@ -12,6 +12,7 @@ const container = {
 }
 const item = { hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }
 
+/** Lists every registered tool and filters the list by the active query. */
 export default function AllToolsPage() {
   const [searchParams] = useSearchParams()
   const [query, setQuery] = useState(searchParams.get('q') ?? '')

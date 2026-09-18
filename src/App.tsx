@@ -7,6 +7,7 @@ import AllToolsPage from './pages/AllToolsPage'
 import ToolPage from './pages/ToolPage'
 import NotFoundPage from './pages/NotFoundPage'
 
+/** Defines the application's routed page hierarchy. */
 export default function App() {
   return (
     <Routes>

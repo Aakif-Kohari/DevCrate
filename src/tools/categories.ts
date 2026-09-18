@@ -56,6 +56,7 @@ export const categories: Category[] = [
   },
 ]
 
+/** Looks up a category by its URL slug. */
 export function getCategory(slug: string): Category | undefined {
   return categories.find((c) => c.slug === slug)
 }

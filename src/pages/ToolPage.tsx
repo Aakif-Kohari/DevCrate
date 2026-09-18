@@ -3,10 +3,11 @@ import { getToolBySlug, getToolsByCategory } from '../tools/registry'
 import { getCategory } from '../tools/categories'
 import Breadcrumbs from '../components/Breadcrumbs'
 
-// The constant template every tool renders inside: breadcrumb, a header
-// with the tool's own metadata, the tool's component itself, then a
-// "more in this category" strip. Individual tools stay self-contained —
-// none of this page chrome lives in a tool's own folder.
+/**
+ * Renders the shared tool-page template around the selected tool.
+ * Individual tools stay self-contained while this page supplies navigation,
+ * metadata, and related-tool links.
+ */
 export default function ToolPage() {
   const { toolSlug } = useParams<{ toolSlug: string }>()
   const entry = toolSlug ? getToolBySlug(toolSlug) : undefined

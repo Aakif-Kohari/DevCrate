@@ -6,6 +6,7 @@ import ThemeToggle from './ThemeToggle'
 import SearchBox from './SearchBox'
 import { useSidebar } from '../lib/useSidebar'
 
+/** Renders the sticky site header and its global controls. */
 export default function Header() {
   const { setMobileOpen } = useSidebar()
 

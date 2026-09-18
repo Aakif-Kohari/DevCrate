@@ -29,10 +29,12 @@ export const toolRegistry: ToolEntry[] = [
   // <-- new tools are registered below this line, one per PR -->
 ]
 
+/** Looks up a registered tool by its URL slug. */
 export function getToolBySlug(slug: string): ToolEntry | undefined {
   return toolRegistry.find((t) => t.meta.slug === slug)
 }
 
+/** Returns all registered tools assigned to a category. */
 export function getToolsByCategory(categorySlug: CategorySlug): ToolEntry[] {
   return toolRegistry.filter((t) => t.meta.category === categorySlug)
 }

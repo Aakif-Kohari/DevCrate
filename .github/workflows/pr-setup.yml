@@ -1,0 +1,72 @@
+name: PR Setup — Label + Assign
+
+# Runs once when a PR is opened: tags it with the OSCI'26 event label and
+# assigns the repo owner and, when eligible, the PR's own author.
+#
+# GitHub only allows assigning users who are repo collaborators (have push
+# access) — addAssignees silently drops anyone else, no error raised. This
+# repo has no collaborators beyond the owner (every real contribution is a
+# fork PR, per CONTRIBUTING.md), so in practice the "author" side of this
+# will only take effect on PRs opened by an existing collaborator — that's
+# a GitHub platform limit, not something a workflow can code around. We
+# check eligibility first rather than attempt-and-hope, so the run log
+# honestly reflects what happened instead of silently no-op'ing.
+#
+# pull_request_target, not pull_request: every real contribution here comes
+# from a fork (see CONTRIBUTING.md), and a fork's pull_request token is
+# read-only with no way to add a label or assignee — see the note at the
+# top of ai-pr-review.yml for the full explanation of why. Safe here for
+# the same reason as there: no checkout, no code execution, just metadata
+# API calls.
+
+on:
+  pull_request_target:
+    types: [opened]
+
+permissions: {}
+
+jobs:
+  setup:
+    name: setup
+    # Dependabot PRs get their own "infra" label via dependabot.yml already,
+    # and assigning a bot as an assignee isn't meaningful — this is for
+    # human contributor PRs.
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    # pull-requests: write alone is sufficient for labeling/assigning a PR
+    # specifically (as opposed to a plain issue, which needs issues: write) —
+    # confirmed against GitHub's own permissions reference.
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.0.1
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const author = pr.user.login;
+            const owner = context.repo.owner;
+
+            await github.rest.issues.addLabels({
+              ...context.repo, issue_number: pr.number, labels: ["OSCI'26"],
+            });
+
+            const assignees = new Set([owner]);
+            if (author !== owner) {
+              try {
+                await github.rest.repos.checkCollaborator({ ...context.repo, username: author });
+                assignees.add(author);
+              } catch (e) {
+                if (e.status === 404) {
+                  // 404 = not a collaborator, which GitHub requires for a
+                  // valid assignee. Expected for most contributor PRs, not
+                  // an error condition.
+                  core.info(`${author} isn't a repo collaborator, so GitHub won't allow assigning them — only ${owner} will be assigned.`);
+                } else {
+                  throw e;
+                }
+              }
+            }
+
+            await github.rest.issues.addAssignees({
+              ...context.repo, issue_number: pr.number, assignees: [...assignees],
+            });

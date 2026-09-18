@@ -8,3 +8,24 @@ import { cleanup } from '@testing-library/react'
 afterEach(() => {
   cleanup()
 })
+
+// jsdom (vitest's DOM environment) doesn't implement window.matchMedia —
+// real browsers always do, so this is a test-environment gap, not an app
+// bug. ThemeProvider (src/lib/ThemeProvider.tsx) reads it on mount to fall
+// back to the OS-level light/dark preference when nothing is in localStorage yet.
+// Defaults to "no preference" (matches: false) so tests get a stable,
+// deterministic light-theme starting point regardless of the machine
+// running them.
+if (typeof window !== 'undefined' && !window.matchMedia) {
+  window.matchMedia = (query: string) =>
+    ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    }) as unknown as MediaQueryList
+}

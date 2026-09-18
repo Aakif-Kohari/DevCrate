@@ -5,6 +5,7 @@ const meta: ToolMeta = {
   name: 'JSON Formatter',
   description: 'Paste messy JSON, get it pretty-printed and validated.',
   tags: ['json', 'formatting', 'text'],
+  category: 'data',
 }
 
 export default meta

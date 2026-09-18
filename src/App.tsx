@@ -1,30 +1,24 @@
-import { useState } from 'react'
-import { toolRegistry } from './tools/registry'
-import ToolCard from './components/ToolCard'
+import { Routes, Route } from 'react-router-dom'
+import RootLayout from './layout/RootLayout'
+import LandingPage from './pages/LandingPage'
+import CategoriesPage from './pages/CategoriesPage'
+import CategoryToolsPage from './pages/CategoryToolsPage'
+import AllToolsPage from './pages/AllToolsPage'
+import ToolPage from './pages/ToolPage'
+import NotFoundPage from './pages/NotFoundPage'
 
+/** Defines the application's routed page hierarchy. */
 export default function App() {
-  const [activeSlug, setActiveSlug] = useState(toolRegistry[0]?.meta.slug)
-  const active = toolRegistry.find((t) => t.meta.slug === activeSlug)
-
   return (
-    <div className="min-h-screen bg-white text-gray-900">
-      <header className="border-b border-gray-200 px-6 py-4">
-        <h1 className="text-xl font-semibold">🧰 DevCrate</h1>
-        <p className="text-sm text-gray-500">Small developer tools, built one PR at a time.</p>
-      </header>
-      <main className="grid grid-cols-1 md:grid-cols-[260px_1fr] gap-6 p-6">
-        <nav className="space-y-2">
-          {toolRegistry.map((t) => (
-            <ToolCard
-              key={t.meta.slug}
-              meta={t.meta}
-              active={t.meta.slug === activeSlug}
-              onClick={() => setActiveSlug(t.meta.slug)}
-            />
-          ))}
-        </nav>
-        <section>{active ? <active.Component /> : null}</section>
-      </main>
-    </div>
+    <Routes>
+      <Route element={<RootLayout />}>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/categories" element={<CategoriesPage />} />
+        <Route path="/categories/:categorySlug" element={<CategoryToolsPage />} />
+        <Route path="/tools" element={<AllToolsPage />} />
+        <Route path="/tools/:toolSlug" element={<ToolPage />} />
+        <Route path="*" element={<NotFoundPage />} />
+      </Route>
+    </Routes>
   )
 }

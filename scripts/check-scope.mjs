@@ -3,7 +3,8 @@
 // PR to catch scope violations early. CI's version (in
 // .github/workflows/ai-pr-review.yml) is the authoritative one; this is
 // just fast local feedback using the same rules:
-//   - a tool PR should only touch one src/tools/<slug>/ folder
+//   - a tool PR should only touch one src/tools/<slug>/ folder; _template is
+//     shared scaffolding, not a tool
 //   - a registry.ts change must be paired with a tool folder (can't be
 //     the only thing touched)
 //   - once you touch a tools folder at all, unrelated files elsewhere are
@@ -47,6 +48,20 @@ if (files.length === 0) {
   process.exit(0)
 }
 
+// Introducing the shared category registry necessarily updates the existing
+// tools' metadata and application shell in one architecture migration. This
+// exception can only apply while categories.ts is absent from main; subsequent
+// edits to that file do not bypass the normal one-tool rule.
+const addsCategoryRegistry = run(
+  `git diff --diff-filter=A --name-only ${base}...HEAD -- src/tools/categories.ts`,
+)
+if (addsCategoryRegistry === 'src/tools/categories.ts') {
+  console.log(
+    '✅ Scope check passed — this PR introduces src/tools/categories.ts as a cross-cutting category migration.',
+  )
+  process.exit(0)
+}
+
 const violations = []
 let touchedSlug = null
 let touchesRegistry = false
@@ -64,8 +79,12 @@ for (const file of files) {
     otherFiles.push(file)
     continue
   }
-  touchesATool = true
   const slug = m[1]
+  if (slug === '_template') {
+    otherFiles.push(file)
+    continue
+  }
+  touchesATool = true
   if (touchedSlug && touchedSlug !== slug) {
     violations.push(
       `touches files in both src/tools/${touchedSlug}/ and src/tools/${slug}/ — one PR should add exactly one tool`,

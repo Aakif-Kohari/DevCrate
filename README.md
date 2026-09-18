@@ -20,7 +20,14 @@ Every "developer utility" site (JSON formatter, JWT decoder, etc.) is one Google
 
 ## Tech Stack
 
-React 18 + TypeScript + Vite + Tailwind CSS. No backend, no database — everything runs client-side.
+React 18 + TypeScript + Vite + Tailwind CSS + React Router + Framer Motion. No backend, no database — everything runs client-side.
+
+## Features
+
+- **Browse by category** — tools are grouped (Text & String, Data & Format, Encoding & Security, Web & Design, Date & Time, Developer Utilities) with dedicated pages for each, plus a searchable all-tools view.
+- **Light & dark themes** — a CSS-variable-based palette that follows your system preference by default, with a manual toggle that persists.
+- **Collapsible sidebar** — a desktop icon-rail collapse and a mobile off-canvas drawer, both animated.
+- **One consistent tool page template** — every tool renders inside the same breadcrumb + header + related-tools shell, so contributors only ever need to build the tool itself.
 
 ## Getting Started
 
@@ -48,7 +55,7 @@ New here? Full guide: [`CONTRIBUTING.md`](CONTRIBUTING.md) (fork/branch/PR steps
    npm install
    ```
 2. Find an open issue tagged `good first issue` or `new-tool`, comment `/claim`.
-3. Branch, build, register: `git checkout -b my-tool`, build the tool inside `src/tools/<your-tool-slug>/` (copy the existing `json-formatter` example), register it in `src/tools/registry.ts` (one line).
+3. Branch, build, register: `git checkout -b my-tool`, build the tool inside `src/tools/<your-tool-slug>/` (copy `src/tools/_template/` to start), register it in `src/tools/registry.ts` (one line).
 4. `npm run verify`, then push your branch and open a PR from your fork into this repo's `main`.
 5. Automated checks + an AI review bot will comment within minutes.
 
@@ -58,13 +65,19 @@ New here? Full guide: [`CONTRIBUTING.md`](CONTRIBUTING.md) (fork/branch/PR steps
 src/
   tools/
     registry.ts          <- central list every tool registers itself in
-    json-formatter/       <- example tool — copy this folder to start a new one
+    categories.ts         <- fixed set of tool categories
+    _template/             <- copy this to start a new tool (working starter, unregistered)
+    json-formatter/        <- example real tool
       index.tsx
       meta.ts
-  components/
-    ToolCard.tsx
-  App.tsx
+  pages/                  <- one file per route (Landing, Categories, ToolPage, ...)
+  layout/                 <- Header, Sidebar, Footer, RootLayout
+  components/             <- shared UI (ToolCard, CategoryCard, Breadcrumbs, ...)
+  lib/                    <- theme + sidebar context/providers/hooks
+  App.tsx                 <- route definitions
 ```
+
+Tools stay simple on purpose: a tool's `index.tsx` is just its own self-contained component. All of the surrounding page chrome (breadcrumbs, category badge, related tools) lives in `src/pages/ToolPage.tsx`, one shared template every tool renders inside — contributors never touch it.
 
 ## Live Demo & Releases
 

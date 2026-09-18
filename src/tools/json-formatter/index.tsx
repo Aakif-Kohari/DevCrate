@@ -38,7 +38,7 @@ export default function JsonFormatter() {
         </label>
         {error ? (
           <div
-            role="alert"
+            role="status"
             aria-labelledby="json-formatter-output-label"
             className="h-72 w-full overflow-auto rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
           >

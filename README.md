@@ -87,6 +87,16 @@ Deployed automatically to Vercel on every push to `main`, with an automatic prev
 
 A ⭐ on the repo genuinely helps — it's how other first-time contributors find beginner-friendly projects like this one.
 
+## Contributors
+
+<!-- readme: Aakif-Kohari,collaborators,contributors -start -->
+<!-- readme: Aakif-Kohari,collaborators,contributors -end -->
+
+## Bots
+
+<!-- readme: bots -start -->
+<!-- readme: bots -end -->
+
 ## License
 
 [MIT](LICENSE) — free to use, fork, and build on.

@@ -92,6 +92,15 @@ Within a few minutes you'll see `build`, `typecheck`, `test`, `lint`, and `scope
 
 If everything passes, the maintainer reviews and merges manually — this isn't an auto-merge repo, so don't worry if it takes a little while after checks go green. If something fails, the bot comments leave specific, actionable feedback — fix and push again to the same branch, no need to open a new PR.
 
+### If `src/tools/registry.ts` has a merge conflict
+Every new tool adds a line to the same list, so if another tool was merged before yours, you may see a conflict. This is normal. Update your branch:
+```bash
+  git fetch upstream
+  git merge upstream/main
+```
+
+Open `src/tools/registry.ts` and keep **both** tools' import lines and **both** entries. Remove the conflict markers (`<<<<<<<`, `=======`, `>>>>>>>`), then run `npm run verify`, commit and push to the same branch.
+
 ## Code style
 
 - TypeScript, functional components, Tailwind utility classes for styling.

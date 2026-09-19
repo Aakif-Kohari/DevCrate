@@ -89,12 +89,38 @@ A ⭐ on the repo genuinely helps — it's how other first-time contributors fin
 
 ## Contributors
 
-<!-- readme: Aakif-Kohari,collaborators,contributors -start -->
-<!-- readme: Aakif-Kohari,collaborators,contributors -end -->
+<!-- readme: collaborators,contributors -start -->
+<table>
+	<tbody>
+		<tr>
+            <td align="center">
+                <a href="https://github.com/aakif-kohari">
+                    <img src="https://avatars.githubusercontent.com/u/159609181?v=4" width="80;" alt="aakif-kohari"/>
+                    <br />
+                    <sub><b>Aakif Kohari</b></sub>
+                </a>
+            </td>
+		</tr>
+	<tbody>
+</table>
+<!-- readme: collaborators,contributors -end -->
 
 ## Bots
 
 <!-- readme: bots -start -->
+<table>
+	<tbody>
+		<tr>
+            <td align="center">
+                <a href="https://github.com/dependabot[bot]">
+                    <img src="https://avatars.githubusercontent.com/in/29110?v=4" width="80;" alt="dependabot[bot]"/>
+                    <br />
+                    <sub><b>dependabot[bot]</b></sub>
+                </a>
+            </td>
+		</tr>
+	<tbody>
+</table>
 <!-- readme: bots -end -->
 
 ## License

@@ -89,7 +89,7 @@ A ⭐ on the repo genuinely helps — it's how other first-time contributors fin
 
 ## Contributors
 
-<!-- readme: Aakif-Kohari,collaborators,contributors -start -->
+<!-- readme: collaborators,contributors -start -->
 <table>
 	<tbody>
 		<tr>
@@ -100,17 +100,10 @@ A ⭐ on the repo genuinely helps — it's how other first-time contributors fin
                     <sub><b>Aakif Kohari</b></sub>
                 </a>
             </td>
-            <td align="center">
-                <a href="https://github.com/Aakif-Kohari">
-                    <img src="https://avatars.githubusercontent.com/u/159609181?v=4" width="80;" alt="Aakif-Kohari"/>
-                    <br />
-                    <sub><b>Aakif Kohari</b></sub>
-                </a>
-            </td>
 		</tr>
 	<tbody>
 </table>
-<!-- readme: Aakif-Kohari,collaborators,contributors -end -->
+<!-- readme: collaborators,contributors -end -->
 
 ## Bots
 

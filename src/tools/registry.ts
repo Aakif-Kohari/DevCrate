@@ -9,6 +9,8 @@ import type { ComponentType } from 'react'
 import type { CategorySlug } from './categories'
 import jsonFormatterMeta from './json-formatter/meta'
 import JsonFormatter from './json-formatter'
+import httpStatusCodesMeta from './http-status-codes/meta'
+import HttpStatusCodes from './http-status-codes'
 
 export interface ToolMeta {
   slug: string
@@ -26,6 +28,7 @@ export interface ToolEntry {
 
 export const toolRegistry: ToolEntry[] = [
   { meta: jsonFormatterMeta, Component: JsonFormatter },
+  { meta: httpStatusCodesMeta, Component: HttpStatusCodes },
   // <-- new tools are registered below this line, one per PR -->
 ]
 

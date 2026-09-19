@@ -3,7 +3,7 @@ import { Copy, Check, RefreshCw, CheckCircle2, XCircle } from 'lucide-react'
 import { generateV4UUID, validateUUID } from './utils'
 
 export default function UuidGenerator() {
-  const [count, setCount] = useState(1)
+  const [count, setCount] = useState<number | ''>(1)
   const [uppercase, setUppercase] = useState(false)
   const [removeHyphens, setRemoveHyphens] = useState(false)
   const [copiedAll, setCopiedAll] = useState(false)
@@ -14,7 +14,7 @@ export default function UuidGenerator() {
   const [rawUuids, setRawUuids] = useState<string[]>(() => [generateV4UUID()])
 
   const handleGenerate = useCallback(() => {
-    const validCount = Math.max(1, Math.min(100, count || 1))
+    const validCount = Math.max(1, Math.min(100, typeof count === 'number' ? count : 1))
     const next: string[] = []
     for (let i = 0; i < validCount; i++) {
       next.push(generateV4UUID())
@@ -41,10 +41,25 @@ export default function UuidGenerator() {
 
   const allUuidsText = useMemo(() => formattedUuids.join('\n'), [formattedUuids])
 
+  const copyToClipboard = async (text: string) => {
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      await navigator.clipboard.writeText(text)
+    } else {
+      const textarea = document.createElement('textarea')
+      textarea.value = text
+      textarea.style.position = 'fixed'
+      textarea.style.opacity = '0'
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+    }
+  }
+
   const handleCopyAll = async () => {
     if (!allUuidsText) return
     try {
-      await navigator.clipboard.writeText(allUuidsText)
+      await copyToClipboard(allUuidsText)
       setCopiedAll(true)
       setTimeout(() => setCopiedAll(false), 2000)
     } catch {
@@ -54,7 +69,7 @@ export default function UuidGenerator() {
 
   const handleCopyOne = async (text: string, index: number) => {
     try {
-      await navigator.clipboard.writeText(text)
+      await copyToClipboard(text)
       setCopiedIndex(index)
       setTimeout(() => setCopiedIndex(null), 2000)
     } catch {
@@ -84,11 +99,21 @@ export default function UuidGenerator() {
               max={100}
               value={count}
               onChange={(e) => {
-                const val = parseInt(e.target.value, 10)
-                if (Number.isNaN(val)) {
-                  setCount(1)
+                const rawVal = e.target.value
+                if (rawVal === '') {
+                  setCount('')
                 } else {
-                  setCount(Math.max(1, Math.min(100, val)))
+                  const val = parseInt(rawVal, 10)
+                  if (!Number.isNaN(val)) {
+                    setCount(val)
+                  }
+                }
+              }}
+              onBlur={() => {
+                if (count === '' || count < 1) {
+                  setCount(1)
+                } else if (count > 100) {
+                  setCount(100)
                 }
               }}
               className="focus-ring w-20 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground"

@@ -52,6 +52,25 @@ describe('UUID Helper Functions', () => {
     expect(resNil.isValid).toBe(true)
     expect(resNil.version).toContain('Nil')
 
+    // Braced GUID format
+    const braced = '{f47ac10b-58cc-4372-a567-0e02b2c3d479}'
+    const resBraced = validateUUID(braced)
+    expect(resBraced.isValid).toBe(true)
+    expect(resBraced.formatted).toBe(v4)
+    expect(resBraced.version).toContain('Version 4')
+
+    // URN format
+    const urn = 'urn:uuid:f47ac10b-58cc-4372-a567-0e02b2c3d479'
+    const resUrn = validateUUID(urn)
+    expect(resUrn.isValid).toBe(true)
+    expect(resUrn.formatted).toBe(v4)
+
+    // Max UUID
+    const max = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+    const resMax = validateUUID(max)
+    expect(resMax.isValid).toBe(true)
+    expect(resMax.version).toContain('Max')
+
     // Invalid format
     const invalid = 'not-a-real-uuid'
     const resInvalid = validateUUID(invalid)
@@ -82,6 +101,9 @@ describe('UuidGenerator Component', () => {
     expect(countInput.value).toBe('1')
 
     const generateBtn = screen.getByRole('button', { name: /generate/i })
+    fireEvent.change(countInput, { target: { value: '' } })
+    expect(countInput.value).toBe('')
+
     fireEvent.change(countInput, { target: { value: '5' } })
     fireEvent.click(generateBtn)
 

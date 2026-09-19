@@ -26,9 +26,15 @@ export interface ValidationResult {
 }
 
 export function validateUUID(raw: string): ValidationResult {
-  const trimmed = raw.trim()
+  let trimmed = raw.trim()
   if (!trimmed) {
     return { isValid: false, version: null, variant: null, error: null, formatted: null }
+  }
+
+  if (trimmed.startsWith('urn:uuid:')) {
+    trimmed = trimmed.slice(9).trim()
+  } else if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+    trimmed = trimmed.slice(1, -1).trim()
   }
 
   if (/^0{8}-?0{4}-?0{4}-?0{4}-?0{12}$/i.test(trimmed)) {

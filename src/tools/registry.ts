@@ -29,9 +29,9 @@ export interface ToolEntry {
 }
 
 export const toolRegistry: ToolEntry[] = [
+  // <-- new tools are registered below this line, one per PR -->
   { meta: jsonFormatterMeta, Component: JsonFormatter },
   { meta: httpStatusCodesMeta, Component: HttpStatusCodes },
-  // <-- new tools are registered below this line, one per PR -->
   { meta: uuidGeneratorMeta, Component: UuidGenerator },
 ]
 

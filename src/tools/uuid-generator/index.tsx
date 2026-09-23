@@ -6,8 +6,11 @@ export default function UuidGenerator() {
   const [count, setCount] = useState<number | ''>(1)
   const [uppercase, setUppercase] = useState(false)
   const [removeHyphens, setRemoveHyphens] = useState(false)
-  const [copiedAll, setCopiedAll] = useState(false)
-  const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
+  const [copyAllStatus, setCopyAllStatus] = useState<'idle' | 'copied' | 'error'>('idle')
+  const [copyOneStatus, setCopyOneStatus] = useState<{
+    index: number
+    status: 'copied' | 'error'
+  } | null>(null)
   const [validatorInput, setValidatorInput] = useState('')
 
   // Seed with initial UUID
@@ -20,8 +23,8 @@ export default function UuidGenerator() {
       next.push(generateV4UUID())
     }
     setRawUuids(next)
-    setCopiedAll(false)
-    setCopiedIndex(null)
+    setCopyAllStatus('idle')
+    setCopyOneStatus(null)
   }, [count])
 
   const formattedUuids = useMemo(() => {
@@ -51,8 +54,11 @@ export default function UuidGenerator() {
       textarea.style.opacity = '0'
       document.body.appendChild(textarea)
       textarea.select()
-      document.execCommand('copy')
+      const success = document.execCommand('copy')
       document.body.removeChild(textarea)
+      if (!success) {
+        throw new Error('Copy command failed')
+      }
     }
   }
 
@@ -60,20 +66,22 @@ export default function UuidGenerator() {
     if (!allUuidsText) return
     try {
       await copyToClipboard(allUuidsText)
-      setCopiedAll(true)
-      setTimeout(() => setCopiedAll(false), 2000)
+      setCopyAllStatus('copied')
+      setTimeout(() => setCopyAllStatus('idle'), 2000)
     } catch {
-      // Fallback
+      setCopyAllStatus('error')
+      setTimeout(() => setCopyAllStatus('idle'), 2000)
     }
   }
 
   const handleCopyOne = async (text: string, index: number) => {
     try {
       await copyToClipboard(text)
-      setCopiedIndex(index)
-      setTimeout(() => setCopiedIndex(null), 2000)
+      setCopyOneStatus({ index, status: 'copied' })
+      setTimeout(() => setCopyOneStatus(null), 2000)
     } catch {
-      // Fallback
+      setCopyOneStatus({ index, status: 'error' })
+      setTimeout(() => setCopyOneStatus(null), 2000)
     }
   }
 
@@ -116,7 +124,7 @@ export default function UuidGenerator() {
                   setCount(100)
                 }
               }}
-              className="focus-ring w-20 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-foreground"
+              className="focus-ring w-20 rounded-md border border-border bg-background px-3 py-1.5 text-base text-foreground sm:text-sm"
             />
           </div>
 
@@ -156,12 +164,18 @@ export default function UuidGenerator() {
               onClick={handleCopyAll}
               className="focus-ring inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted px-3.5 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted/80"
             >
-              {copiedAll ? (
+              {copyAllStatus === 'copied' ? (
                 <Check className="h-4 w-4 text-emerald-500" />
+              ) : copyAllStatus === 'error' ? (
+                <XCircle className="h-4 w-4 text-red-500" />
               ) : (
                 <Copy className="h-4 w-4" />
               )}
-              {copiedAll ? 'Copied!' : 'Copy All'}
+              {copyAllStatus === 'copied'
+                ? 'Copied!'
+                : copyAllStatus === 'error'
+                  ? 'Failed to copy'
+                  : 'Copy All'}
             </button>
           </div>
         </div>
@@ -189,8 +203,10 @@ export default function UuidGenerator() {
                   aria-label={`Copy UUID ${idx + 1}`}
                   className="focus-ring ml-2 shrink-0 rounded p-1.5 text-muted-foreground hover:bg-card hover:text-foreground"
                 >
-                  {copiedIndex === idx ? (
+                  {copyOneStatus?.index === idx && copyOneStatus.status === 'copied' ? (
                     <Check className="h-3.5 w-3.5 text-emerald-500" />
+                  ) : copyOneStatus?.index === idx && copyOneStatus.status === 'error' ? (
+                    <XCircle className="h-3.5 w-3.5 text-red-500" />
                   ) : (
                     <Copy className="h-3.5 w-3.5" />
                   )}
@@ -221,7 +237,7 @@ export default function UuidGenerator() {
               value={validatorInput}
               onChange={(e) => setValidatorInput(e.target.value)}
               placeholder="e.g. 123e4567-e89b-12d3-a456-426614174000 or 123e4567e89b12d3a456426614174000"
-              className="focus-ring w-full rounded-lg border border-border bg-background p-3 font-mono text-sm text-foreground"
+              className="focus-ring w-full rounded-lg border border-border bg-background p-3 font-mono text-base text-foreground sm:text-sm"
             />
           </div>
 

@@ -59,11 +59,16 @@ describe('UUID Helper Functions', () => {
     expect(resBraced.formatted).toBe(v4)
     expect(resBraced.version).toContain('Version 4')
 
-    // URN format
+    // URN format (lower, upper, mixed)
     const urn = 'urn:uuid:f47ac10b-58cc-4372-a567-0e02b2c3d479'
     const resUrn = validateUUID(urn)
     expect(resUrn.isValid).toBe(true)
     expect(resUrn.formatted).toBe(v4)
+
+    const urnUpper = 'URN:UUID:f47ac10b-58cc-4372-a567-0e02b2c3d479'
+    const resUrnUpper = validateUUID(urnUpper)
+    expect(resUrnUpper.isValid).toBe(true)
+    expect(resUrnUpper.formatted).toBe(v4)
 
     // Max UUID
     const max = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
@@ -148,6 +153,16 @@ describe('UuidGenerator Component', () => {
     const copyOneBtn = screen.getByRole('button', { name: /copy uuid 1/i })
     fireEvent.click(copyOneBtn)
     expect(navigator.clipboard.writeText).toHaveBeenCalled()
+  })
+
+  it('displays failure feedback when copying fails', async () => {
+    vi.mocked(navigator.clipboard.writeText).mockRejectedValueOnce(new Error('Permission denied'))
+    render(<UuidGenerator />)
+
+    const copyAllBtn = screen.getByRole('button', { name: /copy all/i })
+    fireEvent.click(copyAllBtn)
+
+    expect(await screen.findByText(/failed to copy/i)).toBeTruthy()
   })
 
   it('validates a valid UUID and displays version information', () => {

@@ -1,3 +1,10 @@
+/**
+ * Generates a random RFC 4122 version 4 UUID string.
+ * Uses `crypto.randomUUID()` when available, falling back to `crypto.getRandomValues()`
+ * or a pseudo-random generator.
+ *
+ * @returns A canonical RFC 4122 v4 UUID string.
+ */
 export function generateV4UUID(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID()
@@ -25,13 +32,21 @@ export interface ValidationResult {
   formatted: string | null
 }
 
+/**
+ * Validates a UUID string and extracts its version, variant, and canonical representation.
+ * Supports canonical hyphenated format, non-hyphenated 32-hex format, braced `{...}`,
+ * and `urn:uuid:...` (case-insensitive) formats, along with nil and max UUIDs.
+ *
+ * @param raw - The input string to validate as a UUID.
+ * @returns A ValidationResult indicating validity, version, variant, canonical format, or error.
+ */
 export function validateUUID(raw: string): ValidationResult {
   let trimmed = raw.trim()
   if (!trimmed) {
     return { isValid: false, version: null, variant: null, error: null, formatted: null }
   }
 
-  if (trimmed.startsWith('urn:uuid:')) {
+  if (/^urn:uuid:/i.test(trimmed)) {
     trimmed = trimmed.slice(9).trim()
   } else if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
     trimmed = trimmed.slice(1, -1).trim()

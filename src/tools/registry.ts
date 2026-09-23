@@ -11,6 +11,8 @@ import jsonFormatterMeta from './json-formatter/meta'
 import JsonFormatter from './json-formatter'
 import httpStatusCodesMeta from './http-status-codes/meta'
 import HttpStatusCodes from './http-status-codes'
+import uuidGeneratorMeta from './uuid-generator/meta'
+import UuidGenerator from './uuid-generator'
 
 export interface ToolMeta {
   slug: string
@@ -30,6 +32,7 @@ export const toolRegistry: ToolEntry[] = [
   { meta: jsonFormatterMeta, Component: JsonFormatter },
   { meta: httpStatusCodesMeta, Component: HttpStatusCodes },
   // <-- new tools are registered below this line, one per PR -->
+  { meta: uuidGeneratorMeta, Component: UuidGenerator },
 ]
 
 /** Looks up a registered tool by its URL slug. */

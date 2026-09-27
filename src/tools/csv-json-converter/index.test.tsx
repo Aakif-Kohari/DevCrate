@@ -59,6 +59,7 @@ describe('CsvJsonConverter', () => {
       target: { value: '[{"a":"x,y","b":"z"}]' },
     })
     expect(screen.getByText('CSV output')).toBeTruthy()
-    expect(screen.getByText('a,b\n"x,y",z')).toBeTruthy()
+    const output = screen.getByLabelText('CSV output', { selector: 'pre' })
+    expect(output.textContent).toBe('a,b\n"x,y",z')
   })
 })

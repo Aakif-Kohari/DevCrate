@@ -115,7 +115,7 @@ function escapeCsvCell(value: string, delimiter: Delimiter): string {
     value.includes('\r') ||
     value.includes(delimiter)
   ) {
-    return `"${value.replaceAll('"', '""')}"`
+    return `"${value.split('"').join('""')}"`
   }
   return value
 }

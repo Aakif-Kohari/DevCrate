@@ -4,10 +4,7 @@ import CsvJsonConverter, { csvToJson, jsonToCsv, parseCsv } from './index'
 
 describe('CsvJsonConverter', () => {
   it('parses quoted commas, escaped quotes, and newlines inside quotes', () => {
-    const rows = parseCsv(
-      'name,note\nAlice,"hello, ""world"""\nBob,"line 1\nline 2"',
-      ',',
-    )
+    const rows = parseCsv('name,note\nAlice,"hello, ""world"""\nBob,"line 1\nline 2"', ',')
 
     expect(rows).toEqual([
       ['name', 'note'],

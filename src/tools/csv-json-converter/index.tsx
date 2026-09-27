@@ -112,7 +112,12 @@ function isFlatValue(value: unknown): boolean {
 }
 
 function escapeCsvCell(value: string, delimiter: Delimiter): string {
-  if (value.includes('"') || value.includes('\n') || value.includes('\r') || value.includes(delimiter)) {
+  if (
+    value.includes('"') ||
+    value.includes('\n') ||
+    value.includes('\r') ||
+    value.includes(delimiter)
+  ) {
     return `"${value.replaceAll('"', '""')}"`
   }
   return value
@@ -139,7 +144,9 @@ export function jsonToCsv(input: string, delimiter: Delimiter): string {
     const record = entry as Record<string, unknown>
     for (const [key, value] of Object.entries(record)) {
       if (!isFlatValue(value)) {
-        throw new Error(`Field "${key}" in item ${index + 1} must be a string, number, boolean, or null.`)
+        throw new Error(
+          `Field "${key}" in item ${index + 1} must be a string, number, boolean, or null.`,
+        )
       }
     }
     return record
@@ -165,7 +172,10 @@ export function jsonToCsv(input: string, delimiter: Delimiter): string {
       keys
         .map((key) => {
           const value = record[key]
-          return escapeCsvCell(value === null || value === undefined ? '' : String(value), delimiter)
+          return escapeCsvCell(
+            value === null || value === undefined ? '' : String(value),
+            delimiter,
+          )
         })
         .join(delimiter),
     ),
@@ -257,7 +267,8 @@ export default function CsvJsonConverter() {
       </div>
 
       <p className="text-sm text-muted-foreground">
-        CSV values stay as strings. JSON to CSV accepts an array of flat objects; missing keys become empty cells.
+        CSV values stay as strings. JSON to CSV accepts an array of flat objects; missing keys
+        become empty cells.
       </p>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

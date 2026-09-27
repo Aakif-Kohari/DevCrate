@@ -1,5 +1,5 @@
 name: Temporary verify issue 35
-# rerun after typecheck fixes
+# rerun after multiline assertion fix
 
 on:
   push:

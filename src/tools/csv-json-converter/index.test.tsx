@@ -1,6 +1,7 @@
 import { describe, expect, fireEvent, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import CsvJsonConverter, { csvToJson, jsonToCsv, parseCsv } from './index'
+import CsvJsonConverter from './index'
+import { csvToJson, jsonToCsv, parseCsv } from './parser'
 
 describe('CsvJsonConverter', () => {
   it('parses quoted commas, escaped quotes, and newlines inside quotes', () => {

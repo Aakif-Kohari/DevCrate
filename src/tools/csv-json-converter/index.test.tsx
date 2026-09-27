@@ -1,5 +1,5 @@
-import { describe, expect, fireEvent, it } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
 import CsvJsonConverter from './index'
 import { csvToJson, jsonToCsv, parseCsv } from './parser'
 

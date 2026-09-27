@@ -13,6 +13,8 @@ import httpStatusCodesMeta from './http-status-codes/meta'
 import HttpStatusCodes from './http-status-codes'
 import uuidGeneratorMeta from './uuid-generator/meta'
 import UuidGenerator from './uuid-generator'
+import csvJsonConverterMeta from './csv-json-converter/meta'
+import CsvJsonConverter from './csv-json-converter'
 
 export interface ToolMeta {
   slug: string
@@ -33,6 +35,7 @@ export const toolRegistry: ToolEntry[] = [
   { meta: jsonFormatterMeta, Component: JsonFormatter },
   { meta: httpStatusCodesMeta, Component: HttpStatusCodes },
   { meta: uuidGeneratorMeta, Component: UuidGenerator },
+  { meta: csvJsonConverterMeta, Component: CsvJsonConverter },
 ]
 
 /** Looks up a registered tool by its URL slug. */

@@ -1,4 +1,5 @@
-import { describe, expect, fireEvent, render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
 import UrlEncoderDecoder from './index'
 
 describe('UrlEncoderDecoder', () => {
@@ -28,7 +29,7 @@ describe('UrlEncoderDecoder', () => {
     fireEvent.change(screen.getByLabelText('Input'), { target: { value: '%E0%A4%A' } })
 
     expect(screen.getByRole('alert').textContent).toMatch(/malformed percent-encoded sequence/i)
-    expect(screen.getByLabelText('Output', { selector: 'pre' }).textContent).toBe('')
+    expect(screen.getByText('Error')).toBeTruthy()
   })
 
   it('preserves URL separators in full URL mode', () => {

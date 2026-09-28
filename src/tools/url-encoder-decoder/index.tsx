@@ -16,11 +16,11 @@ export default function UrlEncoderDecoder() {
   const [operation, setOperation] = useState<Operation>('encode')
   const [mode, setMode] = useState<EncodingMode>('component')
 
-  const result = useMemo(() => {
-    if (!input) return { output: '', error: '' }
+  const { output, error } = useMemo(() => {
+    if (!input) return { output: '', error: null as string | null }
 
     try {
-      return { output: transform(input, operation, mode), error: '' }
+      return { output: transform(input, operation, mode), error: null }
     } catch {
       return {
         output: '',
@@ -30,57 +30,73 @@ export default function UrlEncoderDecoder() {
   }, [input, operation, mode])
 
   const swap = () => {
-    if (result.error || !result.output) return
-    setInput(result.output)
+    if (error || !output) return
+    setInput(output)
     setOperation((current) => (current === 'encode' ? 'decode' : 'encode'))
   }
 
   return (
-    <div className="space-y-4">
+    <section className="space-y-4" aria-label="URL encoder and decoder">
       <div className="flex flex-wrap gap-4">
-        <fieldset>
-          <legend className="mb-1 text-sm font-medium">Operation</legend>
-          <div className="flex rounded-lg border border-border p-1">
+        <div>
+          <p className="mb-1 text-sm font-medium">Operation</p>
+          <div className="flex gap-2" role="group" aria-label="Operation">
             <button
               type="button"
               aria-pressed={operation === 'encode'}
-              className={`rounded-md px-3 py-1.5 text-sm ${operation === 'encode' ? 'bg-muted font-medium' : ''}`}
               onClick={() => setOperation('encode')}
+              className={`focus-ring rounded-lg border px-3 py-2 text-sm ${
+                operation === 'encode'
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border bg-card text-card-foreground hover:bg-muted'
+              }`}
             >
               Encode
             </button>
             <button
               type="button"
               aria-pressed={operation === 'decode'}
-              className={`rounded-md px-3 py-1.5 text-sm ${operation === 'decode' ? 'bg-muted font-medium' : ''}`}
               onClick={() => setOperation('decode')}
+              className={`focus-ring rounded-lg border px-3 py-2 text-sm ${
+                operation === 'decode'
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border bg-card text-card-foreground hover:bg-muted'
+              }`}
             >
               Decode
             </button>
           </div>
-        </fieldset>
+        </div>
 
-        <fieldset>
-          <legend className="mb-1 text-sm font-medium">Encoding mode</legend>
-          <div className="flex rounded-lg border border-border p-1">
+        <div>
+          <p className="mb-1 text-sm font-medium">Encoding mode</p>
+          <div className="flex gap-2" role="group" aria-label="Encoding mode">
             <button
               type="button"
               aria-pressed={mode === 'component'}
-              className={`rounded-md px-3 py-1.5 text-sm ${mode === 'component' ? 'bg-muted font-medium' : ''}`}
               onClick={() => setMode('component')}
+              className={`focus-ring rounded-lg border px-3 py-2 text-sm ${
+                mode === 'component'
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border bg-card text-card-foreground hover:bg-muted'
+              }`}
             >
               URL component
             </button>
             <button
               type="button"
               aria-pressed={mode === 'url'}
-              className={`rounded-md px-3 py-1.5 text-sm ${mode === 'url' ? 'bg-muted font-medium' : ''}`}
               onClick={() => setMode('url')}
+              className={`focus-ring rounded-lg border px-3 py-2 text-sm ${
+                mode === 'url'
+                  ? 'border-primary bg-primary text-primary-foreground'
+                  : 'border-border bg-card text-card-foreground hover:bg-muted'
+              }`}
             >
               Full URL
             </button>
           </div>
-        </fieldset>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -100,30 +116,35 @@ export default function UrlEncoderDecoder() {
         <div>
           <div className="mb-1 flex items-center justify-between gap-2">
             <span id="url-encoder-output-label" className="block text-sm font-medium">
-              Output
+              {error ? 'Error' : 'Output'}
             </span>
             <button
               type="button"
-              className="rounded-lg border border-border px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-              disabled={!result.output || Boolean(result.error)}
+              className="focus-ring rounded-lg border border-border px-3 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={!output || Boolean(error)}
               onClick={swap}
             >
               Swap input/output
             </button>
           </div>
-          <pre
-            aria-labelledby="url-encoder-output-label"
-            className="h-72 w-full overflow-auto rounded-lg border border-border bg-muted p-3 font-mono text-sm"
-          >
-            {result.output}
-          </pre>
-          {result.error ? (
-            <p role="alert" className="mt-2 text-sm text-destructive">
-              {result.error}
-            </p>
-          ) : null}
+          {error ? (
+            <div
+              role="alert"
+              aria-labelledby="url-encoder-output-label"
+              className="h-72 w-full overflow-auto rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
+            >
+              {error}
+            </div>
+          ) : (
+            <pre
+              aria-labelledby="url-encoder-output-label"
+              className="h-72 w-full overflow-auto rounded-lg border border-border bg-muted p-3 font-mono text-sm"
+            >
+              {output}
+            </pre>
+          )}
         </div>
       </div>
-    </div>
+    </section>
   )
 }

@@ -25,7 +25,9 @@ export default function UrlEncoderDecoder() {
       return {
         output: '',
         error:
-          'Unable to decode this value because it contains a malformed percent-encoded sequence.',
+          operation === 'decode'
+            ? 'Unable to decode this value because it contains a malformed percent-encoded sequence.'
+            : 'Unable to encode this value because it contains invalid Unicode.',
       }
     }
   }, [input, operation, mode])

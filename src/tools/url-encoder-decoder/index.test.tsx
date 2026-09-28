@@ -32,6 +32,14 @@ describe('UrlEncoderDecoder', () => {
     expect(screen.getByText('Error')).toBeTruthy()
   })
 
+  it('shows a clear encode error for invalid Unicode instead of throwing', () => {
+    render(<UrlEncoderDecoder />)
+    fireEvent.change(screen.getByLabelText('Input'), { target: { value: '\uD800' } })
+
+    expect(screen.getByRole('alert').textContent).toMatch(/invalid unicode/i)
+    expect(screen.getByText('Error')).toBeTruthy()
+  })
+
   it('preserves URL separators in full URL mode', () => {
     render(<UrlEncoderDecoder />)
     fireEvent.click(screen.getByRole('button', { name: 'Full URL' }))

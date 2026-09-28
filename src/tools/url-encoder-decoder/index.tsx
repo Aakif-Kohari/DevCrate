@@ -109,6 +109,8 @@ export default function UrlEncoderDecoder() {
           </label>
           <textarea
             id="url-encoder-input"
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? 'url-encoder-error' : undefined}
             className="focus-ring h-72 w-full rounded-lg border border-border bg-card p-3 font-mono text-base text-card-foreground sm:text-sm"
             placeholder="Paste text or a URL"
             value={input}
@@ -132,6 +134,7 @@ export default function UrlEncoderDecoder() {
           </div>
           {error ? (
             <div
+              id="url-encoder-error"
               role="alert"
               aria-labelledby="url-encoder-output-label"
               className="h-72 w-full overflow-auto rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300"

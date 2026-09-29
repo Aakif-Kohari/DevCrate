@@ -26,21 +26,50 @@ export default function SlugGenerator() {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <div className="space-y-3">
-        <label htmlFor="slug-input" className="block text-sm font-medium">Text</label>
-        <textarea id="slug-input" aria-label="Text" value={input} onChange={(e) => setInput(e.target.value)}
-          className="focus-ring h-56 w-full rounded-lg border border-border bg-card p-3" />
-        <label htmlFor="slug-separator" className="block text-sm font-medium">Separator</label>
-        <select id="slug-separator" value={separator} onChange={(e) => setSeparator(e.target.value as '-' | '_')}
-          className="rounded-lg border border-border bg-card p-2">
-          <option value="-">Hyphen (-)</option><option value="_">Underscore (_)</option>
+        <label htmlFor="slug-input" className="block text-sm font-medium">
+          Text
+        </label>
+        <textarea
+          id="slug-input"
+          aria-label="Text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          className="focus-ring h-56 w-full rounded-lg border border-border bg-card p-3"
+        />
+        <label htmlFor="slug-separator" className="block text-sm font-medium">
+          Separator
+        </label>
+        <select
+          id="slug-separator"
+          value={separator}
+          onChange={(e) => setSeparator(e.target.value as '-' | '_')}
+          className="rounded-lg border border-border bg-card p-2"
+        >
+          <option value="-">Hyphen (-)</option>
+          <option value="_">Underscore (_)</option>
         </select>
-        <label htmlFor="slug-max" className="block text-sm font-medium">Maximum length (optional)</label>
-        <input id="slug-max" type="number" min="1" value={maxLength} onChange={(e) => setMaxLength(e.target.value)}
-          className="rounded-lg border border-border bg-card p-2" />
+        <label htmlFor="slug-max" className="block text-sm font-medium">
+          Maximum length (optional)
+        </label>
+        <input
+          id="slug-max"
+          type="number"
+          min="1"
+          value={maxLength}
+          onChange={(e) => setMaxLength(e.target.value)}
+          className="rounded-lg border border-border bg-card p-2"
+        />
       </div>
       <div>
-        <label id="slug-output-label" className="mb-1 block text-sm font-medium">Slug</label>
-        <pre aria-labelledby="slug-output-label" className="min-h-24 rounded-lg border border-border bg-muted p-3">{output}</pre>
+        <label id="slug-output-label" className="mb-1 block text-sm font-medium">
+          Slug
+        </label>
+        <pre
+          aria-labelledby="slug-output-label"
+          className="min-h-24 rounded-lg border border-border bg-muted p-3"
+        >
+          {output}
+        </pre>
       </div>
     </div>
   )

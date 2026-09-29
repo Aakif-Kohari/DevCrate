@@ -17,6 +17,8 @@ import csvJsonConverterMeta from './csv-json-converter/meta'
 import CsvJsonConverter from './csv-json-converter'
 import slugifyMeta from './slugify/meta'
 import SlugGenerator from './slugify'
+import urlEncoderDecoderMeta from './url-encoder-decoder/meta'
+import UrlEncoderDecoder from './url-encoder-decoder'
 
 export interface ToolMeta {
   slug: string
@@ -39,6 +41,7 @@ export const toolRegistry: ToolEntry[] = [
   { meta: uuidGeneratorMeta, Component: UuidGenerator },
   { meta: csvJsonConverterMeta, Component: CsvJsonConverter },
   { meta: slugifyMeta, Component: SlugGenerator },
+  { meta: urlEncoderDecoderMeta, Component: UrlEncoderDecoder },
 ]
 
 /** Looks up a registered tool by its URL slug. */

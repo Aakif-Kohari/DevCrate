@@ -11,7 +11,9 @@ describe('SlugGenerator', () => {
 
   it('honours separator and max length without trailing separator', () => {
     render(<SlugGenerator />)
-    fireEvent.change(screen.getByLabelText('Text'), { target: { value: 'Hello wonderful world' } })
+    fireEvent.change(screen.getByLabelText('Text'), {
+      target: { value: 'Hello wonderful world' },
+    })
     fireEvent.change(screen.getByLabelText('Separator'), { target: { value: '_' } })
     fireEvent.change(screen.getByLabelText(/Maximum length/), { target: { value: '14' } })
     expect(screen.getByText('hello_wonderfu')).toBeTruthy()

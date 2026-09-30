@@ -5,13 +5,14 @@ type Unit = keyof typeof UNIT_SECONDS
 
 const TOKEN_UNITS: Record<string, number> = {
   ms: 0.001, millisecond: 0.001, milliseconds: 0.001,
-  s: 1, sec: 1, second: 1, seconds: 1,
-  m: 60, min: 60, minute: 60, minutes: 60,
-  h: 3600, hr: 3600, hour: 3600, hours: 3600,
+  s: 1, sec: 1, secs: 1, second: 1, seconds: 1,
+  m: 60, min: 60, mins: 60, minute: 60, minutes: 60,
+  h: 3600, hr: 3600, hrs: 3600, hour: 3600, hours: 3600,
   d: 86400, day: 86400, days: 86400,
   w: 604800, week: 604800, weeks: 604800,
 }
 
+/** Parse a signed human-readable duration into total seconds. */
 export function parseDuration(input: string): number | null {
   const source = input.trim()
   if (!source) return null
@@ -31,9 +32,10 @@ export function parseDuration(input: string): number | null {
   return total
 }
 
+/** Format total seconds as a compact day/hour/minute/second duration. */
 export function readableDuration(totalSeconds: number): string {
   const sign = totalSeconds < 0 ? '-' : ''
-  let remaining = Math.abs(totalSeconds)
+  let remaining = Math.round(Math.abs(totalSeconds) * 1000) / 1000
   const days = Math.floor(remaining / 86400); remaining -= days * 86400
   const hours = Math.floor(remaining / 3600); remaining -= hours * 3600
   const minutes = Math.floor(remaining / 60); remaining -= minutes * 60
@@ -43,6 +45,7 @@ export function readableDuration(totalSeconds: number): string {
   return sign + (text || '0s')
 }
 
+/** Render the interactive duration converter tool. */
 export default function DurationConverter() {
   const [value,setValue]=useState(''); const [unit,setUnit]=useState<Unit>('seconds'); const [human,setHuman]=useState('')
   const numeric=Number(value)

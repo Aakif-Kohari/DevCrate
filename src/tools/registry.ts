@@ -13,6 +13,8 @@ import httpStatusCodesMeta from './http-status-codes/meta'
 import HttpStatusCodes from './http-status-codes'
 import uuidGeneratorMeta from './uuid-generator/meta'
 import UuidGenerator from './uuid-generator'
+import durationConverterMeta from './duration-converter/meta'
+import DurationConverter from './duration-converter'
 
 export interface ToolMeta {
   slug: string
@@ -30,6 +32,7 @@ export interface ToolEntry {
 
 export const toolRegistry: ToolEntry[] = [
   // <-- new tools are registered below this line, one per PR -->
+  { meta: durationConverterMeta, Component: DurationConverter },
   { meta: jsonFormatterMeta, Component: JsonFormatter },
   { meta: httpStatusCodesMeta, Component: HttpStatusCodes },
   { meta: uuidGeneratorMeta, Component: UuidGenerator },

@@ -17,6 +17,8 @@ import caseConverterMeta from './case-converter/meta'
 import CaseConverter from './case-converter'
 import csvJsonConverterMeta from './csv-json-converter/meta'
 import CsvJsonConverter from './csv-json-converter'
+import slugifyMeta from './slugify/meta'
+import SlugGenerator from './slugify'
 import urlEncoderDecoderMeta from './url-encoder-decoder/meta'
 import UrlEncoderDecoder from './url-encoder-decoder'
 
@@ -41,6 +43,7 @@ export const toolRegistry: ToolEntry[] = [
   { meta: httpStatusCodesMeta, Component: HttpStatusCodes },
   { meta: uuidGeneratorMeta, Component: UuidGenerator },
   { meta: csvJsonConverterMeta, Component: CsvJsonConverter },
+  { meta: slugifyMeta, Component: SlugGenerator },
   { meta: urlEncoderDecoderMeta, Component: UrlEncoderDecoder },
 ]
 

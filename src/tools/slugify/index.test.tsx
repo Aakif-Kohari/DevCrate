@@ -15,8 +15,8 @@ describe('SlugGenerator', () => {
       target: { value: 'Hello wonderful world' },
     })
     fireEvent.change(screen.getByLabelText('Separator'), { target: { value: '_' } })
-    fireEvent.change(screen.getByLabelText(/Maximum length/), { target: { value: '14' } })
-    expect(screen.getByText('hello_wonderfu')).toBeTruthy()
+    fireEvent.change(screen.getByLabelText(/Maximum length/), { target: { value: '16' } })
+    expect(screen.getByText('hello_wonderful')).toBeTruthy()
   })
 
   it('returns empty output for symbols only', () => {

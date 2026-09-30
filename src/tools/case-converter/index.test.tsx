@@ -34,7 +34,7 @@ describe('CaseConverter', () => {
     render(<CaseConverter />)
     fireEvent.change(screen.getByLabelText('Text'), { target: { value: 'hello world' } })
     fireEvent.click(screen.getAllByRole('button', { name: 'Copy' })[0])
-    expect(await screen.findByRole('status')).toHaveTextContent(/clipboard is unavailable/i)
+    expect(await screen.findByText(/clipboard is unavailable/i, { selector: '[role="status"]' })).toBeTruthy()
     vi.unstubAllGlobals()
   })
 })

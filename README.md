@@ -100,6 +100,13 @@ A ⭐ on the repo genuinely helps — it's how other first-time contributors fin
                     <sub><b>Aakif Kohari</b></sub>
                 </a>
             </td>
+            <td align="center">
+                <a href="https://github.com/Chirudeva-Reddy">
+                    <img src="https://avatars.githubusercontent.com/u/189002530?v=4" width="80;" alt="Chirudeva-Reddy"/>
+                    <br />
+                    <sub><b>Chirudeva Reddy</b></sub>
+                </a>
+            </td>
 		</tr>
 	<tbody>
 </table>

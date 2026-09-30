@@ -43,7 +43,7 @@ export default function SlugGenerator() {
           id="slug-separator"
           value={separator}
           onChange={(e) => setSeparator(e.target.value as '-' | '_')}
-          className="rounded-lg border border-border bg-card p-2"
+          className="focus-ring rounded-lg border border-border bg-card p-2"
         >
           <option value="-">Hyphen (-)</option>
           <option value="_">Underscore (_)</option>
@@ -57,7 +57,7 @@ export default function SlugGenerator() {
           min="1"
           value={maxLength}
           onChange={(e) => setMaxLength(e.target.value)}
-          className="rounded-lg border border-border bg-card p-2"
+          className="focus-ring rounded-lg border border-border bg-card p-2"
         />
       </div>
       <div>
@@ -66,7 +66,8 @@ export default function SlugGenerator() {
         </label>
         <pre
           aria-labelledby="slug-output-label"
-          className="min-h-24 rounded-lg border border-border bg-muted p-3"
+          aria-live="polite"
+          className="min-h-24 whitespace-pre-wrap break-all rounded-lg border border-border bg-muted p-3"
         >
           {output}
         </pre>

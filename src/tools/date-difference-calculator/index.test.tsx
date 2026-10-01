@@ -76,9 +76,9 @@ describe('dateDifference', () => {
     fireEvent.click(screen.getByLabelText('Business days only (Mon–Fri)'))
 
     expect(
-      screen.getByText(/dates were swapped so the earlier date is calculated first/i),
-    ).toBeInTheDocument()
-    expect(screen.getByText(/Total: 2 days/i)).toBeInTheDocument()
+      screen.getByText(/dates were swapped so the earlier date is calculated first/i).textContent,
+    ).toMatch(/dates were swapped so the earlier date is calculated first/i)
+    expect(screen.getByText(/Total: 2 days/i).textContent).toMatch(/Total: 2 days/i)
   })
 
   it('rejects invalid dates', () => {

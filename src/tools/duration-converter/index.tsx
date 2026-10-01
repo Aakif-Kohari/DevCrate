@@ -19,10 +19,7 @@ export default function DurationConverter() {
   const [human, setHuman] = useState('')
 
   const numeric = Number(value)
-  const seconds =
-    value.trim() && Number.isFinite(numeric)
-      ? numeric * UNIT_SECONDS[unit]
-      : null
+  const seconds = value.trim() && Number.isFinite(numeric) ? numeric * UNIT_SECONDS[unit] : null
   const parsed = useMemo(() => parseDuration(human), [human])
 
   return (
@@ -88,9 +85,7 @@ export default function DurationConverter() {
           ))}
       </div>
 
-      {seconds !== null && (
-        <p className="text-sm">Readable: {readableDuration(seconds)}</p>
-      )}
+      {seconds !== null && <p className="text-sm">Readable: {readableDuration(seconds)}</p>}
     </div>
   )
 }

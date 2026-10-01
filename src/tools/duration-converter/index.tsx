@@ -20,7 +20,9 @@ export default function DurationConverter() {
 
   const numeric = Number(value)
   const seconds =
-    value.trim() && Number.isFinite(numeric) ? numeric * UNIT_SECONDS[unit] : null
+    value.trim() && Number.isFinite(numeric)
+      ? numeric * UNIT_SECONDS[unit]
+      : null
   const parsed = useMemo(() => parseDuration(human), [human])
 
   return (

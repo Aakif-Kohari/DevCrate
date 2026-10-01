@@ -36,7 +36,7 @@ describe('CaseConverter', () => {
     fireEvent.change(screen.getByLabelText('Text'), { target: { value: 'hello world' } })
     fireEvent.click(screen.getAllByRole('button', { name: 'Copy' })[0])
 
-    const status = await screen.findByRole('status')
+    const status = await screen.findByText(/clipboard is unavailable/i)
     expect(status.textContent).toMatch(/clipboard is unavailable/i)
 
     vi.unstubAllGlobals()

@@ -26,10 +26,7 @@ export default function WordCounter() {
       />
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {rows.map(([label, value]) => (
-          <div
-            key={label}
-            className="rounded-lg border border-border bg-muted p-3"
-          >
+          <div key={label} className="rounded-lg border border-border bg-muted p-3">
             <dt className="text-sm">{label}</dt>
             <dd className="text-xl font-semibold">{value}</dd>
           </div>

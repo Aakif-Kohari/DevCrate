@@ -13,6 +13,8 @@ import httpStatusCodesMeta from './http-status-codes/meta'
 import HttpStatusCodes from './http-status-codes'
 import uuidGeneratorMeta from './uuid-generator/meta'
 import UuidGenerator from './uuid-generator'
+import caseConverterMeta from './case-converter/meta'
+import CaseConverter from './case-converter'
 import csvJsonConverterMeta from './csv-json-converter/meta'
 import CsvJsonConverter from './csv-json-converter'
 import slugifyMeta from './slugify/meta'
@@ -36,6 +38,7 @@ export interface ToolEntry {
 
 export const toolRegistry: ToolEntry[] = [
   // <-- new tools are registered below this line, one per PR -->
+  { meta: caseConverterMeta, Component: CaseConverter },
   { meta: jsonFormatterMeta, Component: JsonFormatter },
   { meta: httpStatusCodesMeta, Component: HttpStatusCodes },
   { meta: uuidGeneratorMeta, Component: UuidGenerator },

@@ -8,11 +8,14 @@ export default function CaseConverter() {
 
   async function copy(value: string, label: string) {
     try {
-      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable')
+      if (!navigator.clipboard?.writeText)
+        throw new Error('Clipboard unavailable')
       await navigator.clipboard.writeText(value)
       setCopyStatus(`${label} copied`)
     } catch {
-      setCopyStatus('Clipboard is unavailable. Select and copy the result manually.')
+      setCopyStatus(
+        'Clipboard is unavailable. Select and copy the result manually.',
+      )
     }
   }
 

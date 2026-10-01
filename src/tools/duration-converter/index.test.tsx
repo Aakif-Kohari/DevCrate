@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseDuration, readableDuration } from './index'
+import { parseDuration, readableDuration } from './duration'
 
 describe('duration converter', () => {
   it('formats 3661 seconds', () => expect(readableDuration(3661)).toBe('1h 1m 1s'))

@@ -8,24 +8,18 @@ export default function CaseConverter() {
 
   async function copy(value: string, label: string) {
     try {
-      if (!navigator.clipboard?.writeText)
-        throw new Error('Clipboard unavailable')
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable')
       await navigator.clipboard.writeText(value)
       setCopyStatus(`${label} copied`)
     } catch {
-      setCopyStatus(
-        'Clipboard is unavailable. Select and copy the result manually.',
-      )
+      setCopyStatus('Clipboard is unavailable. Select and copy the result manually.')
     }
   }
 
   return (
     <div className="space-y-4">
       <div>
-        <label
-          htmlFor="case-converter-input"
-          className="mb-1 block text-sm font-medium"
-        >
+        <label htmlFor="case-converter-input" className="mb-1 block text-sm font-medium">
           Text
         </label>
         <textarea
@@ -38,10 +32,7 @@ export default function CaseConverter() {
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         {results.map(({ label, value }) => (
-          <div
-            key={label}
-            className="rounded-lg border border-border bg-muted p-3"
-          >
+          <div key={label} className="rounded-lg border border-border bg-muted p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
               <span className="text-sm font-medium">{label}</span>
               <button
@@ -52,20 +43,13 @@ export default function CaseConverter() {
                 Copy
               </button>
             </div>
-            <output
-              aria-label={label}
-              className="block break-all font-mono text-sm"
-            >
+            <output aria-label={label} className="block break-all font-mono text-sm">
               {value}
             </output>
           </div>
         ))}
       </div>
-      <p
-        role="status"
-        aria-live="polite"
-        className="text-sm text-muted-foreground"
-      >
+      <p role="status" aria-live="polite" className="text-sm text-muted-foreground">
         {copyStatus}
       </p>
     </div>

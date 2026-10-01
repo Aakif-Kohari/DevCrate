@@ -1,6 +1,7 @@
-import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
-import CaseConverter, { convertCases } from './index'
+import { describe, expect, it, vi } from 'vitest'
+import { convertCases } from './convert'
+import CaseConverter from './index'
 
 function values(input: string) {
   return Object.fromEntries(convertCases(input).map(({ label, value }) => [label, value]))
@@ -34,7 +35,10 @@ describe('CaseConverter', () => {
     render(<CaseConverter />)
     fireEvent.change(screen.getByLabelText('Text'), { target: { value: 'hello world' } })
     fireEvent.click(screen.getAllByRole('button', { name: 'Copy' })[0])
-    expect(await screen.findByRole('status', { name: '' })).toHaveTextContent(/clipboard is unavailable/i)
+
+    const status = await screen.findByRole('status')
+    expect(status.textContent).toMatch(/clipboard is unavailable/i)
+
     vi.unstubAllGlobals()
   })
 })

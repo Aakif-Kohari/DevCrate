@@ -45,8 +45,7 @@ export function dateDifference(
   const start = reversed ? parsedEnd : parsedStart
   const end = reversed ? parsedStart : parsedEnd
   const inclusiveExtra = includeEnd ? 1 : 0
-  const totalDays =
-    Math.round((end.getTime() - start.getTime()) / DAY_MS) + inclusiveExtra
+  const totalDays = Math.round((end.getTime() - start.getTime()) / DAY_MS) + inclusiveExtra
   const effectiveEnd = new Date(end.getTime() + inclusiveExtra * DAY_MS)
 
   let years = effectiveEnd.getUTCFullYear() - start.getUTCFullYear()
@@ -61,9 +60,7 @@ export function dateDifference(
 
   const cursor = addMonthsClamped(start, years * 12 + months)
   const days = Math.round((effectiveEnd.getTime() - cursor.getTime()) / DAY_MS)
-  const selectedDays = weekdaysOnly
-    ? businessDays(start, end, includeEnd)
-    : totalDays
+  const selectedDays = weekdaysOnly ? businessDays(start, end, includeEnd) : totalDays
 
   return {
     reversed,
@@ -129,10 +126,7 @@ export default function DateDifferenceCalculator() {
         </label>
       </div>
       {result && (
-        <div
-          className="rounded-lg border border-border bg-muted p-4"
-          aria-live="polite"
-        >
+        <div className="rounded-lg border border-border bg-muted p-4" aria-live="polite">
           {result.reversed && (
             <p className="mb-2 text-sm">
               Dates were swapped so the earlier date is calculated first.

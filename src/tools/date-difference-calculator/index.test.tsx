@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import DateDifferenceCalculator, { dateDifference } from './index'
+import { dateDifference } from './date-difference'
+import DateDifferenceCalculator from './index'
 
 describe('dateDifference', () => {
   it('handles leap-day range', () => {

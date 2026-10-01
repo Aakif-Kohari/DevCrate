@@ -3,14 +3,10 @@ export function stats(input: string) {
   const noSpaces = Array.from(input).filter((char) => !/\s/u.test(char)).length
   const words = input.trim() ? input.trim().split(/\s+/u).length : 0
   const sentences = input.trim()
-    ? (input.match(/[^.!?]+[.!?]+|[^.!?]+$/gu) ?? []).filter((sentence) =>
-        sentence.trim(),
-      ).length
+    ? (input.match(/[^.!?]+[.!?]+|[^.!?]+$/gu) ?? []).filter((sentence) => sentence.trim()).length
     : 0
   const lines = input ? input.split(/\r?\n/u).length : 0
-  const paragraphs = input.trim()
-    ? input.trim().split(/\n\s*\n/u).filter(Boolean).length
-    : 0
+  const paragraphs = input.trim() ? input.trim().split(/\n\s*\n/u).filter(Boolean).length : 0
 
   return {
     chars,

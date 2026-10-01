@@ -15,6 +15,10 @@ import uuidGeneratorMeta from './uuid-generator/meta'
 import UuidGenerator from './uuid-generator'
 import durationConverterMeta from './duration-converter/meta'
 import DurationConverter from './duration-converter'
+import wordCounterMeta from './word-counter/meta'
+import WordCounter from './word-counter'
+import caseConverterMeta from './case-converter/meta'
+import CaseConverter from './case-converter'
 import csvJsonConverterMeta from './csv-json-converter/meta'
 import CsvJsonConverter from './csv-json-converter'
 import slugifyMeta from './slugify/meta'
@@ -39,6 +43,8 @@ export interface ToolEntry {
 export const toolRegistry: ToolEntry[] = [
   // <-- new tools are registered below this line, one per PR -->
   { meta: durationConverterMeta, Component: DurationConverter },
+  { meta: wordCounterMeta, Component: WordCounter },
+  { meta: caseConverterMeta, Component: CaseConverter },
   { meta: jsonFormatterMeta, Component: JsonFormatter },
   { meta: httpStatusCodesMeta, Component: HttpStatusCodes },
   { meta: uuidGeneratorMeta, Component: UuidGenerator },

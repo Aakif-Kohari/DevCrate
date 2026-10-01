@@ -35,7 +35,10 @@ export default function CaseConverter() {
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         {results.map(({ label, value }) => (
-          <div key={label} className="rounded-lg border border-border bg-muted p-3">
+          <div
+            key={label}
+            className="rounded-lg border border-border bg-muted p-3"
+          >
             <div className="mb-2 flex items-center justify-between gap-2">
               <span className="text-sm font-medium">{label}</span>
               <button
@@ -46,13 +49,20 @@ export default function CaseConverter() {
                 Copy
               </button>
             </div>
-            <output aria-label={label} className="block break-all font-mono text-sm">
+            <output
+              aria-label={label}
+              className="block break-all font-mono text-sm"
+            >
               {value}
             </output>
           </div>
         ))}
       </div>
-      <p role="status" aria-live="polite" className="text-sm text-muted-foreground">
+      <p
+        role="status"
+        aria-live="polite"
+        className="text-sm text-muted-foreground"
+      >
         {copyStatus}
       </p>
     </div>

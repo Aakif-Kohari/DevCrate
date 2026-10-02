@@ -13,6 +13,8 @@ import httpStatusCodesMeta from './http-status-codes/meta'
 import HttpStatusCodes from './http-status-codes'
 import uuidGeneratorMeta from './uuid-generator/meta'
 import UuidGenerator from './uuid-generator'
+import dateDifferenceMeta from './date-difference-calculator/meta'
+import DateDifferenceCalculator from './date-difference-calculator'
 import wordCounterMeta from './word-counter/meta'
 import WordCounter from './word-counter'
 import caseConverterMeta from './case-converter/meta'
@@ -40,6 +42,7 @@ export interface ToolEntry {
 
 export const toolRegistry: ToolEntry[] = [
   // <-- new tools are registered below this line, one per PR -->
+  { meta: dateDifferenceMeta, Component: DateDifferenceCalculator },
   { meta: wordCounterMeta, Component: WordCounter },
   { meta: caseConverterMeta, Component: CaseConverter },
   { meta: jsonFormatterMeta, Component: JsonFormatter },

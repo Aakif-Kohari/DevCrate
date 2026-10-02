@@ -15,6 +15,8 @@ import uuidGeneratorMeta from './uuid-generator/meta'
 import UuidGenerator from './uuid-generator'
 import durationConverterMeta from './duration-converter/meta'
 import DurationConverter from './duration-converter'
+import dateDifferenceMeta from './date-difference-calculator/meta'
+import DateDifferenceCalculator from './date-difference-calculator'
 import wordCounterMeta from './word-counter/meta'
 import WordCounter from './word-counter'
 import caseConverterMeta from './case-converter/meta'
@@ -43,6 +45,7 @@ export interface ToolEntry {
 export const toolRegistry: ToolEntry[] = [
   // <-- new tools are registered below this line, one per PR -->
   { meta: durationConverterMeta, Component: DurationConverter },
+  { meta: dateDifferenceMeta, Component: DateDifferenceCalculator },
   { meta: wordCounterMeta, Component: WordCounter },
   { meta: caseConverterMeta, Component: CaseConverter },
   { meta: jsonFormatterMeta, Component: JsonFormatter },

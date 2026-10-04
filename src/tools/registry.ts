@@ -27,6 +27,8 @@ import slugifyMeta from './slugify/meta'
 import SlugGenerator from './slugify'
 import urlEncoderDecoderMeta from './url-encoder-decoder/meta'
 import UrlEncoderDecoder from './url-encoder-decoder'
+import imageToBase64Meta from './image-to-base64/meta'
+import ImageToBase64 from './image-to-base64'
 
 export interface ToolMeta {
   slug: string
@@ -54,6 +56,7 @@ export const toolRegistry: ToolEntry[] = [
   { meta: csvJsonConverterMeta, Component: CsvJsonConverter },
   { meta: slugifyMeta, Component: SlugGenerator },
   { meta: urlEncoderDecoderMeta, Component: UrlEncoderDecoder },
+  { meta: imageToBase64Meta, Component: ImageToBase64 },
 ]
 
 /** Looks up a registered tool by its URL slug. */

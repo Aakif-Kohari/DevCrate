@@ -96,7 +96,10 @@ export default function ImageToBase64() {
       </div>
 
       {error ? (
-        <p role="alert" className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300">
+        <p
+          role="alert"
+          className="rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300"
+        >
           {error}
         </p>
       ) : null}
@@ -134,17 +137,33 @@ export default function ImageToBase64() {
                 className="focus-ring h-56 w-full rounded-lg border border-border bg-muted p-3 font-mono text-xs"
               />
               <div className="flex flex-wrap gap-2">
-                <button type="button" className="focus-ring rounded-lg border border-border bg-card px-3 py-2 text-sm hover:bg-muted" onClick={() => copy(result.dataUri, 'Data URI')}>
+                <button
+                  type="button"
+                  className="focus-ring rounded-lg border border-border bg-card px-3 py-2 text-sm hover:bg-muted"
+                  onClick={() => copy(result.dataUri, 'Data URI')}
+                >
                   Copy data URI
                 </button>
-                <button type="button" className="focus-ring rounded-lg border border-border bg-card px-3 py-2 text-sm hover:bg-muted" onClick={() => copy(result.base64, 'Base64')}>
+                <button
+                  type="button"
+                  className="focus-ring rounded-lg border border-border bg-card px-3 py-2 text-sm hover:bg-muted"
+                  onClick={() => copy(result.base64, 'Base64')}
+                >
                   Copy raw Base64
                 </button>
-                <button type="button" className="focus-ring rounded-lg border border-border bg-card px-3 py-2 text-sm hover:bg-muted" onClick={() => copy(`url("${result.dataUri}")`, 'CSS')}>
+                <button
+                  type="button"
+                  className="focus-ring rounded-lg border border-border bg-card px-3 py-2 text-sm hover:bg-muted"
+                  onClick={() => copy(`url("${result.dataUri}")`, 'CSS')}
+                >
                   Copy CSS url()
                 </button>
               </div>
-              {copied ? <p role="status" className="text-sm text-muted-foreground">Copied {copied}.</p> : null}
+              {copied ? (
+                <p role="status" className="text-sm text-muted-foreground">
+                  Copied {copied}.
+                </p>
+              ) : null}
             </div>
           </div>
         </>

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 
 const ALLOWED_TYPES = new Set([
   'image/png',
@@ -27,8 +27,11 @@ export default function ImageToBase64() {
   const [error, setError] = useState('')
   const [warning, setWarning] = useState('')
   const [copied, setCopied] = useState('')
+  const readerRef = useRef<FileReader | null>(null)
 
   const readFile = useCallback((file?: File) => {
+    readerRef.current?.abort?.()
+    readerRef.current = null
     setCopied('')
     setError('')
     setWarning('')
@@ -44,8 +47,15 @@ export default function ImageToBase64() {
     }
 
     const reader = new FileReader()
-    reader.onerror = () => setError('Could not read this image.')
+    readerRef.current = reader
+    reader.onerror = () => {
+      if (readerRef.current !== reader) return
+      readerRef.current = null
+      setError('Could not read this image.')
+    }
     reader.onload = () => {
+      if (readerRef.current !== reader) return
+      readerRef.current = null
       if (typeof reader.result !== 'string' || !reader.result.startsWith('data:image/')) {
         setError('Could not create an image data URI.')
         return

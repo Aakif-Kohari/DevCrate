@@ -35,9 +35,11 @@ describe('ImageToBase64', () => {
     render(<ImageToBase64 />)
     const input = screen.getByLabelText(/choose an image/i)
     const file = new File(['hello'], 'notes.txt', { type: 'text/plain' })
+    const readSpy = vi.spyOn(MockFileReader.prototype, 'readAsDataURL')
 
     fireEvent.change(input, { target: { files: [file] } })
 
+    expect(readSpy).not.toHaveBeenCalled()
     expect(screen.getByRole('alert').textContent).toMatch(/PNG, JPG, GIF, WebP, or SVG/i)
     expect(screen.queryByLabelText('Data URI')).toBeNull()
   })

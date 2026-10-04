@@ -98,7 +98,7 @@ export default function ImageToBase64() {
           type="file"
           accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml"
           onChange={(event) => readFile(event.target.files?.[0])}
-          className="focus-ring mx-auto block max-w-full text-sm"
+          className="focus-ring mx-auto block max-w-full text-sm file:mr-4 file:cursor-pointer file:rounded-lg file:border file:border-primary file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary-foreground hover:file:bg-primary/90"
         />
         <p className="mt-2 text-xs text-muted-foreground">
           PNG, JPG, GIF, WebP, and SVG. Everything stays in your browser.

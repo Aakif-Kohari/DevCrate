@@ -101,6 +101,13 @@ A ⭐ on the repo genuinely helps — it's how other first-time contributors fin
                 </a>
             </td>
             <td align="center">
+                <a href="https://github.com/soyeladice-svg">
+                    <img src="https://avatars.githubusercontent.com/u/327943577?v=4" width="80;" alt="soyeladice-svg"/>
+                    <br />
+                    <sub><b>Alejandro Florez</b></sub>
+                </a>
+            </td>
+            <td align="center">
                 <a href="https://github.com/Chirudeva-Reddy">
                     <img src="https://avatars.githubusercontent.com/u/189002530?v=4" width="80;" alt="Chirudeva-Reddy"/>
                     <br />

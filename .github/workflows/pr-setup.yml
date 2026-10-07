@@ -75,7 +75,7 @@ jobs:
               for (const name of labels) {
                 if (existing.has(name.toLowerCase())) continue;
                 try {
-                  await github.rest.issues.createLabel({ ...context.repo, name, color: 'ededed' });
+                  await github.rest.issues.createLabel({ ...context.repo, name, color: 'd93f0b' });
                 } catch (e) {
                   if (e.status !== 422) throw e;
                   // Another PR setup may have created the label concurrently.

@@ -337,6 +337,20 @@ jobs:
             // for a real syntax error in the author's code.
             const MAX_PATCH_CHARS = 20000;
             const MAX_TOTAL_CHARS = 100000;
+            const MAX_LISTED_FILES = 20;
+            const MAX_FILENAME_CHARS = 200;
+            const formatFileList = (names, formatName, separator) => {
+              const listed = names.slice(0, MAX_LISTED_FILES).map(name => {
+                const displayName = name.length > MAX_FILENAME_CHARS
+                  ? name.slice(0, MAX_FILENAME_CHARS - 1) + '…'
+                  : name;
+                return formatName(displayName);
+              });
+              if (names.length > MAX_LISTED_FILES) {
+                listed.push('… and ' + (names.length - MAX_LISTED_FILES) + ' more files');
+              }
+              return listed.join(separator);
+            };
             const diffParts = [];
             const clippedFiles = [];
             let totalChars = 0;
@@ -367,18 +381,18 @@ jobs:
             }
             if (omittedFiles.length) {
               diffParts.push('Files omitted for total diff length (contents not shown):\n' +
-                omittedFiles.map(n => '- ' + n).join('\n'));
+                formatFileList(omittedFiles, n => '- ' + n, '\n'));
             }
             const diffSummary = diffParts.join('\n\n');
             const sizeNote = (clippedFiles.length || omittedFiles.length)
               ? 'Large diff: ' +
-                (clippedFiles.length ? 'partial excerpts of ' + clippedFiles.map(n => '`' + n + '`').join(', ') : '') +
+                (clippedFiles.length ? 'partial excerpts of ' + formatFileList(clippedFiles, n => '`' + n + '`', ', ') : '') +
                 (clippedFiles.length && omittedFiles.length ? ' and ' : '') +
-                (omittedFiles.length ? 'files not shown to the reviewer: ' + omittedFiles.map(n => '`' + n + '`').join(', ') : '') +
+                (omittedFiles.length ? 'files not shown to the reviewer: ' + formatFileList(omittedFiles, n => '`' + n + '`', ', ') : '') +
                 ' — worth a manual look.'
               : '';
             const lockfileNote = omittedLockfiles.length
-              ? 'Lockfile contents omitted: ' + omittedLockfiles.map(n => '`' + n + '`').join(', ') +
+              ? 'Lockfile contents omitted: ' + formatFileList(omittedLockfiles, n => '`' + n + '`', ', ') +
                 ' — worth a manual look.'
               : '';
             const truncationNote = [sizeNote, lockfileNote].filter(Boolean).join(' ');

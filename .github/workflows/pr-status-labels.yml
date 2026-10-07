@@ -43,6 +43,7 @@ permissions: {}
 concurrency:
   # Sweeps and targeted runs can touch the same PR, so serialize all updates.
   group: pr-status-labels
+  queue: max
   cancel-in-progress: false
 
 jobs:

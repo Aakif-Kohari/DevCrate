@@ -84,9 +84,13 @@ jobs:
                 }
                 existing.add(name.toLowerCase());
               }
-              await github.rest.issues.addLabels({
-                ...context.repo, issue_number: pr.number, labels,
-              });
+              try {
+                await github.rest.issues.addLabels({
+                  ...context.repo, issue_number: pr.number, labels,
+                });
+              } catch (e) {
+                core.warning(`Couldn't add labels to #${pr.number} (${e.message}).`);
+              }
             }
 
             // --- assignees ---

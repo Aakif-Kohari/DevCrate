@@ -15,7 +15,7 @@ name: PR Status Labels
 # merges anything.
 #
 # Labels are re-evaluated whenever the PR itself changes, whenever any check
-# suite finishes, whenever main moves (that is what creates new conflicts),
+# suite or CI workflow finishes, whenever main moves (that is what creates new conflicts),
 # and on a 15 minute schedule as a safety net. pull_request_review runs get a
 # read-only token on fork PRs and can't change labels, so the schedule is what
 # picks up "changes-requested".
@@ -29,6 +29,9 @@ on:
     types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
   check_suite:
     types: [completed]
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
   push:
     branches: [main]
   schedule:
@@ -38,7 +41,8 @@ on:
 permissions: {}
 
 concurrency:
-  group: pr-status-labels-${{ github.event.pull_request.number || 'sweep' }}
+  # Sweeps and targeted runs can touch the same PR, so serialize all updates.
+  group: pr-status-labels
   cancel-in-progress: false
 
 jobs:

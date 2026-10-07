@@ -67,6 +67,23 @@ jobs:
                 .filter(Boolean),
             )];
             if (labels.length > 0) {
+              const existing = new Set(
+                (await github.paginate(github.rest.issues.listLabelsForRepo, {
+                  ...context.repo, per_page: 100,
+                })).map((l) => l.name.toLowerCase()),
+              );
+              for (const name of labels) {
+                if (existing.has(name.toLowerCase())) continue;
+                try {
+                  await github.rest.issues.createLabel({ ...context.repo, name, color: 'ededed' });
+                } catch (e) {
+                  if (e.status !== 422) throw e;
+                  // Another PR setup may have created the label concurrently.
+                  // Confirm it exists before accepting a validation error.
+                  await github.rest.issues.getLabel({ ...context.repo, name });
+                }
+                existing.add(name.toLowerCase());
+              }
               await github.rest.issues.addLabels({
                 ...context.repo, issue_number: pr.number, labels,
               });

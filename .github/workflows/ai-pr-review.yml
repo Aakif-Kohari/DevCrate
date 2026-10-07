@@ -341,11 +341,13 @@ jobs:
             const clippedFiles = [];
             let totalChars = 0;
             const omittedFiles = [];
+            const omittedLockfiles = [];
             for (const f of files) {
               let clipped = false;
               let patch = f.patch || '(binary file, or too large for GitHub to provide a text diff)';
               const isLockfile = /(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml)$/.test(f.filename);
               if (isLockfile) {
+                omittedLockfiles.push(f.filename);
                 patch = '(lockfile — contents omitted on purpose; dependency changes show up in package.json)';
               } else if (patch.length > MAX_PATCH_CHARS) {
                 // Cut at a line boundary and say so explicitly.
@@ -368,13 +370,18 @@ jobs:
                 omittedFiles.map(n => '- ' + n).join('\n'));
             }
             const diffSummary = diffParts.join('\n\n');
-            const truncationNote = (clippedFiles.length || omittedFiles.length)
+            const sizeNote = (clippedFiles.length || omittedFiles.length)
               ? 'Large diff: ' +
                 (clippedFiles.length ? 'partial excerpts of ' + clippedFiles.map(n => '`' + n + '`').join(', ') : '') +
                 (clippedFiles.length && omittedFiles.length ? ' and ' : '') +
                 (omittedFiles.length ? 'files not shown to the reviewer: ' + omittedFiles.map(n => '`' + n + '`').join(', ') : '') +
                 ' — worth a manual look.'
               : '';
+            const lockfileNote = omittedLockfiles.length
+              ? 'Lockfile contents omitted: ' + omittedLockfiles.map(n => '`' + n + '`').join(', ') +
+                ' — worth a manual look.'
+              : '';
+            const truncationNote = [sizeNote, lockfileNote].filter(Boolean).join(' ');
 
             const prBody = pr.body || '';
             const issueMatch = prBody.match(/\b(?:closes|fixes|resolves)\s+#(\d+)/i);

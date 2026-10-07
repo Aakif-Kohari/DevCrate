@@ -94,6 +94,32 @@ describe('App routing', () => {
     expect(nav && within(nav).getByText('All Tools')).toBeTruthy()
   })
 
+  it('keeps the mobile menu closed when returning to the path where it was opened', async () => {
+    renderAt('/')
+    fireEvent.click(screen.getByRole('button', { name: 'Open menu' }))
+    expect(screen.getByRole('dialog', { name: 'Menu' })).toBeTruthy()
+
+    // Navigate outside the drawer so its click handler cannot clear the state.
+    const desktopNav = screen.getAllByRole('link', { name: 'Home' })[0].closest('nav')!
+    fireEvent.click(within(desktopNav).getByRole('link', { name: 'All Tools' }))
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Menu' })).toBeNull())
+    fireEvent.click(within(desktopNav).getByRole('link', { name: 'Home' }))
+    expect(screen.queryByRole('dialog', { name: 'Menu' })).toBeNull()
+  })
+
+  it.each([
+    ['/', 'Home'],
+    ['/categories', 'Categories'],
+    ['/tools', 'All Tools'],
+    ['/tools/json-formatter', 'JSON Formatter'],
+  ])('closes the mobile menu when its link targets the current path %s', async (path, name) => {
+    renderAt(path)
+    fireEvent.click(screen.getByRole('button', { name: 'Open menu' }))
+    const dialog = screen.getByRole('dialog', { name: 'Menu' })
+    fireEvent.click(within(dialog).getByRole('link', { name }))
+    await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Menu' })).toBeNull())
+  })
+
   it('mobile menu traps focus, closes on Escape, and restores focus to the trigger', async () => {
     renderAt('/')
     const openButton = screen.getByRole('button', { name: 'Open menu' })

@@ -340,8 +340,9 @@ jobs:
             const diffParts = [];
             const clippedFiles = [];
             let totalChars = 0;
-            let omittedFiles = 0;
+            const omittedFiles = [];
             for (const f of files) {
+              let clipped = false;
               let patch = f.patch || '(binary file, or too large for GitHub to provide a text diff)';
               const isLockfile = /(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml)$/.test(f.filename);
               if (isLockfile) {
@@ -351,22 +352,27 @@ jobs:
                 const cut = patch.lastIndexOf('\n', MAX_PATCH_CHARS);
                 patch = patch.slice(0, cut > 0 ? cut : MAX_PATCH_CHARS) +
                   '\n[excerpt ends here — the rest of this file\'s diff was left out for length only]';
-                clippedFiles.push(f.filename);
+                clipped = true;
               }
               const part = `--- ${f.filename} (+${f.additions}/-${f.deletions}) ---\n${patch}`;
               if (totalChars + part.length > MAX_TOTAL_CHARS) {
-                omittedFiles++;
+                omittedFiles.push(f.filename);
                 continue;
               }
+              if (clipped) clippedFiles.push(f.filename);
               diffParts.push(part);
               totalChars += part.length;
             }
+            if (omittedFiles.length) {
+              diffParts.push('Files omitted for total diff length (contents not shown):\n' +
+                omittedFiles.map(n => '- ' + n).join('\n'));
+            }
             const diffSummary = diffParts.join('\n\n');
-            const truncationNote = (clippedFiles.length || omittedFiles)
+            const truncationNote = (clippedFiles.length || omittedFiles.length)
               ? 'Large diff: ' +
                 (clippedFiles.length ? 'partial excerpts of ' + clippedFiles.map(n => '`' + n + '`').join(', ') : '') +
-                (clippedFiles.length && omittedFiles ? ' and ' : '') +
-                (omittedFiles ? omittedFiles + ' further file(s) not shown to the reviewer' : '') +
+                (clippedFiles.length && omittedFiles.length ? ' and ' : '') +
+                (omittedFiles.length ? 'files not shown to the reviewer: ' + omittedFiles.map(n => '`' + n + '`').join(', ') : '') +
                 ' — worth a manual look.'
               : '';
 

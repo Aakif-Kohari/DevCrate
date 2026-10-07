@@ -94,7 +94,7 @@ jobs:
                 pullRequest(number: $number) {
                   isDraft
                   mergeable
-                  commits(last: 1) { nodes { commit { statusCheckRollup { state } } } }
+                  potentialMergeCommit { statusCheckRollup { state } }
                 }
               }
             }`;
@@ -124,7 +124,7 @@ jobs:
               }
               if ([...latest.values()].includes('CHANGES_REQUESTED')) return 'changes-requested';
 
-              const rollup = node.commits.nodes[0]?.commit.statusCheckRollup?.state ?? null;
+              const rollup = node.potentialMergeCommit?.statusCheckRollup?.state ?? null;
               if (rollup === 'FAILURE' || rollup === 'ERROR') return 'checks-failing';
               if (rollup === 'SUCCESS' && node.mergeable === 'MERGEABLE') return 'merge-ready';
               return 'checks-pending';

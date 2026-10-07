@@ -9,6 +9,9 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   // closes it again without needing an effect to reset the state.
   const location = useLocation()
   const [mobileOpenPath, setMobileOpenPath] = useState<string | null>(null)
+  if (mobileOpenPath !== null && mobileOpenPath !== location.pathname) {
+    setMobileOpenPath(null)
+  }
   const isMobileOpen = mobileOpenPath === location.pathname
   const setMobileOpen = (open: boolean) => setMobileOpenPath(open ? location.pathname : null)
   const [isCollapsed, setCollapsed] = useState(() => {

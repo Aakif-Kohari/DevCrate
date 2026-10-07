@@ -1,0 +1,6 @@
+{
+  "_help": "Read by .github/workflows/pr-setup.yml whenever a PR is opened. Edit this file on the default branch; changes apply to every PR opened afterwards.",
+  "defaultLabels": [],
+  "assignOwner": true,
+  "assignAuthor": true
+}

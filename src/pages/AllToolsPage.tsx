@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Search } from 'lucide-react'
@@ -17,16 +17,20 @@ export default function AllToolsPage() {
   const [searchParams] = useSearchParams()
   const queryParam = searchParams.get('q')
   const [query, setQuery] = useState(queryParam ?? '')
+  const [syncedParam, setSyncedParam] = useState(queryParam)
 
   // AllToolsPage stays mounted across /tools <-> /tools?q=... navigations
   // (same route, just a query-string change), so useState's initializer
   // only fires once on first mount and won't pick up a later q param on
   // its own — e.g. arriving here via the header search box's "no live
   // matches, jump to full results" fallback. Keep query in sync whenever
-  // the URL's q param changes.
-  useEffect(() => {
+  // the URL's q param changes. This adjusts state during render (React's
+  // recommended pattern for resetting state on a prop change) rather than
+  // in an effect, which would cause an extra cascading render.
+  if (queryParam !== syncedParam) {
+    setSyncedParam(queryParam)
     setQuery(queryParam ?? '')
-  }, [queryParam])
+  }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()

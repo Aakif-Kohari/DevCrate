@@ -1,16 +1,17 @@
-name: PR Setup — Label + Assign
+name: PR Setup — Default Labels + Assignees
 
-# Runs once when a PR is opened: tags it with the OSCI'26 event label and
-# assigns the repo owner and, when eligible, the PR's own author.
+# Runs once when a PR is opened:
+#   - applies every label listed in `defaultLabels` in .github/pr-config.json
+#     (add or remove names there — no workflow edit needed; labels that don't
+#     exist yet are created automatically)
+#   - assigns the PR's author and, unless `assignOwner` is false, the
+#     repository owner
 #
-# GitHub only allows assigning users who are repo collaborators (have push
-# access) — addAssignees silently drops anyone else, no error raised. This
-# repo has no collaborators beyond the owner (every real contribution is a
-# fork PR, per CONTRIBUTING.md), so in practice the "author" side of this
-# will only take effect on PRs opened by an existing collaborator — that's
-# a GitHub platform limit, not something a workflow can code around. We
-# check eligibility first rather than attempt-and-hope, so the run log
-# honestly reflects what happened instead of silently no-op'ing.
+# Status labels (merge-conflict, merge-ready, ...) are handled separately by
+# pr-status-labels.yml, since they have to be re-evaluated as a PR changes.
+#
+# The config is read from the default branch via the API, never from the PR
+# branch, so a fork PR can't change which labels or assignees it receives.
 #
 # pull_request_target, not pull_request: every real contribution here comes
 # from a fork (see CONTRIBUTING.md), and a fork's pull_request token is
@@ -38,6 +39,7 @@ jobs:
     # confirmed against GitHub's own permissions reference.
     permissions:
       pull-requests: write
+      contents: read
     steps:
       - uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.0.1
         with:
@@ -46,27 +48,53 @@ jobs:
             const author = pr.user.login;
             const owner = context.repo.owner;
 
-            await github.rest.issues.addLabels({
-              ...context.repo, issue_number: pr.number, labels: ["OSCI'26"],
-            });
-
-            const assignees = new Set([owner]);
-            if (author !== owner) {
-              try {
-                await github.rest.repos.checkCollaborator({ ...context.repo, username: author });
-                assignees.add(author);
-              } catch (e) {
-                if (e.status === 404) {
-                  // 404 = not a collaborator, which GitHub requires for a
-                  // valid assignee. Expected for most contributor PRs, not
-                  // an error condition.
-                  core.info(`${author} isn't a repo collaborator, so GitHub won't allow assigning them — only ${owner} will be assigned.`);
-                } else {
-                  throw e;
-                }
-              }
+            let config = { defaultLabels: [], assignOwner: true, assignAuthor: true };
+            try {
+              const { data } = await github.rest.repos.getContent({
+                ...context.repo,
+                path: '.github/pr-config.json',
+                ref: context.payload.repository.default_branch,
+              });
+              config = { ...config, ...JSON.parse(Buffer.from(data.content, 'base64').toString('utf8')) };
+            } catch (e) {
+              core.warning(`Couldn't read .github/pr-config.json (${e.message}) — using built-in defaults.`);
             }
 
+            // --- default labels ---
+            const labels = [...new Set(
+              (Array.isArray(config.defaultLabels) ? config.defaultLabels : [])
+                .map((l) => String(l).trim())
+                .filter(Boolean),
+            )];
+            if (labels.length > 0) {
+              await github.rest.issues.addLabels({
+                ...context.repo, issue_number: pr.number, labels,
+              });
+            }
+
+            // --- assignees ---
+            // No collaborator pre-check: GitHub lets a PR's own author be
+            // assigned even without push access, and the old collaborator
+            // check meant contributors were never even attempted. Assign
+            // everyone in one call, then read the PR back and report honestly
+            // if GitHub dropped anyone, instead of assuming it worked.
+            const wanted = new Set();
+            if (config.assignOwner !== false) wanted.add(owner);
+            if (config.assignAuthor !== false) wanted.add(author);
+            if (wanted.size === 0) return;
+
             await github.rest.issues.addAssignees({
-              ...context.repo, issue_number: pr.number, assignees: [...assignees],
+              ...context.repo, issue_number: pr.number, assignees: [...wanted],
             });
+
+            const { data: issue } = await github.rest.issues.get({
+              ...context.repo, issue_number: pr.number,
+            });
+            const assigned = new Set((issue.assignees || []).map((a) => a.login.toLowerCase()));
+            for (const login of wanted) {
+              if (assigned.has(login.toLowerCase())) {
+                core.info(`Assigned ${login} to #${pr.number}.`);
+              } else {
+                core.warning(`GitHub did not assign ${login} to #${pr.number} (user isn't assignable in this repo).`);
+              }
+            }

@@ -96,7 +96,7 @@ export default function Footer() {
         </div>
       </div>
       <div className="border-t border-border px-4 py-4 text-center text-xs text-muted-foreground">
-        Built for Open Source Connect India 2026 (OSCI'26) — by everyone who's opened a PR.
+        Open source under the MIT license — built by everyone who's opened a PR.
       </div>
     </footer>
   )

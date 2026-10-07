@@ -4,7 +4,7 @@ A community-built crate of small, single-purpose developer utility tools — one
 
 Think of it as an in-browser Swiss-army knife: a JSON formatter, a JWT decoder, a regex tester, a UUID generator, a color converter, a cron parser — dozens of tiny, useful, self-contained tools, each contributed by a different person.
 
-**Built for [Open Source Connect India 2026 (OSCI'26)](https://www.osconnect.org/osci).**
+**Open source and looking for contributors — your first pull request can be a brand-new tool.**
 
 ---
 

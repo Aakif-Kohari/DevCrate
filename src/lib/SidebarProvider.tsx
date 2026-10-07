@@ -5,7 +5,12 @@ import { SidebarContext, SIDEBAR_STORAGE_KEY } from './SidebarContext'
 
 /** Provides responsive sidebar state and persists the desktop preference. */
 export function SidebarProvider({ children }: { children: ReactNode }) {
-  const [isMobileOpen, setMobileOpen] = useState(false)
+  // The drawer remembers the path it was opened on, so navigating anywhere
+  // closes it again without needing an effect to reset the state.
+  const location = useLocation()
+  const [mobileOpenPath, setMobileOpenPath] = useState<string | null>(null)
+  const isMobileOpen = mobileOpenPath === location.pathname
+  const setMobileOpen = (open: boolean) => setMobileOpenPath(open ? location.pathname : null)
   const [isCollapsed, setCollapsed] = useState(() => {
     try {
       return window.localStorage.getItem(SIDEBAR_STORAGE_KEY) === '1'
@@ -13,12 +18,6 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
       return false
     }
   })
-  const location = useLocation()
-
-  // Close the mobile drawer automatically on navigation.
-  useEffect(() => {
-    setMobileOpen(false)
-  }, [location.pathname])
 
   // Persist collapse state as a side effect of the value changing, not
   // inside the state updater itself — updater functions are meant to be

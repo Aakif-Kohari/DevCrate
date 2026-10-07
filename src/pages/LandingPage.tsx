@@ -30,7 +30,7 @@ export default function LandingPage() {
           className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground"
         >
           <Sparkles size={13} className="text-primary" />
-          Built for Open Source Connect India 2026
+          Open source and looking for contributors
         </motion.span>
         <motion.h1
           initial={{ opacity: 0, y: 12 }}

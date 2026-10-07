@@ -1,0 +1,158 @@
+name: PR Status Labels
+
+# Keeps exactly one status label on every open PR so the maintainer can scan
+# the PR list at a glance:
+#
+#   draft              - PR is still a draft
+#   merge-conflict     - the branch conflicts with its base and needs updating
+#   changes-requested  - a reviewer's latest review asks for changes
+#   checks-failing     - at least one CI check failed
+#   checks-pending     - checks are still running (or haven't started yet)
+#   merge-ready        - no conflicts, checks green, no changes requested
+#
+# The first match wins, in the order above. "merge-ready" means the PR is
+# ready for a maintainer to look at and merge by hand — nothing here ever
+# merges anything.
+#
+# Labels are re-evaluated whenever the PR itself changes, whenever any check
+# suite finishes, whenever main moves (that is what creates new conflicts),
+# and on a 15 minute schedule as a safety net. pull_request_review runs get a
+# read-only token on fork PRs and can't change labels, so the schedule is what
+# picks up "changes-requested".
+#
+# Safe with fork PRs: the PR-triggered run uses pull_request_target (see the
+# note in ai-pr-review.yml), never checks out PR code, and only calls GitHub
+# APIs. Label names, colours and the rules above live in this file.
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
+  check_suite:
+    types: [completed]
+  push:
+    branches: [main]
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch: {}
+
+permissions: {}
+
+concurrency:
+  group: pr-status-labels-${{ github.event.pull_request.number || 'sweep' }}
+  cancel-in-progress: false
+
+jobs:
+  label:
+    name: label
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      checks: read
+      statuses: read
+    steps:
+      - uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.0.1
+        with:
+          script: |
+            const LABELS = {
+              'draft': { color: '6e7781', description: 'Draft / work in progress' },
+              'merge-conflict': { color: 'b60205', description: 'Conflicts with the base branch and needs updating' },
+              'changes-requested': { color: 'e99695', description: 'A reviewer requested changes' },
+              'checks-failing': { color: 'd93f0b', description: 'One or more CI checks are failing' },
+              'checks-pending': { color: 'fbca04', description: 'CI checks are running or have not started yet' },
+              'merge-ready': { color: '0e8a16', description: 'No conflicts, checks passing, no changes requested' },
+            };
+            const MANAGED = Object.keys(LABELS);
+            const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+            // Make sure every status label exists (with a colour and description).
+            const existing = new Set(
+              (await github.paginate(github.rest.issues.listLabelsForRepo, {
+                ...context.repo, per_page: 100,
+              })).map((l) => l.name),
+            );
+            for (const [name, { color, description }] of Object.entries(LABELS)) {
+              if (existing.has(name)) continue;
+              await github.rest.issues.createLabel({ ...context.repo, name, color, description })
+                .catch((e) => { if (e.status !== 422) throw e; });
+            }
+
+            // Which PRs to evaluate: just the triggering one, or every open one.
+            let numbers;
+            if (context.eventName === 'pull_request_target') {
+              numbers = [context.payload.pull_request.number];
+            } else {
+              const open = await github.paginate(github.rest.pulls.list, {
+                ...context.repo, state: 'open', per_page: 100,
+              });
+              numbers = open.map((p) => p.number);
+            }
+
+            const QUERY = `query($owner: String!, $repo: String!, $number: Int!) {
+              repository(owner: $owner, name: $repo) {
+                pullRequest(number: $number) {
+                  isDraft
+                  mergeable
+                  commits(last: 1) { nodes { commit { statusCheckRollup { state } } } }
+                }
+              }
+            }`;
+
+            async function decideStatus(number) {
+              let node;
+              // GitHub computes mergeability lazily; UNKNOWN just means "ask again shortly".
+              for (let attempt = 0; attempt < 5; attempt++) {
+                const res = await github.graphql(QUERY, { ...context.repo, number });
+                node = res.repository.pullRequest;
+                if (node.mergeable !== 'UNKNOWN') break;
+                await sleep(3000);
+              }
+
+              if (node.isDraft) return 'draft';
+              if (node.mergeable === 'CONFLICTING') return 'merge-conflict';
+
+              // Latest meaningful review per reviewer; a later approval or a
+              // dismissal replaces an earlier "changes requested".
+              const reviews = await github.paginate(github.rest.pulls.listReviews, {
+                ...context.repo, pull_number: number, per_page: 100,
+              });
+              const latest = new Map();
+              for (const r of reviews) {
+                if (!r.user || !['APPROVED', 'CHANGES_REQUESTED', 'DISMISSED'].includes(r.state)) continue;
+                latest.set(r.user.login, r.state);
+              }
+              if ([...latest.values()].includes('CHANGES_REQUESTED')) return 'changes-requested';
+
+              const rollup = node.commits.nodes[0]?.commit.statusCheckRollup?.state ?? null;
+              if (rollup === 'FAILURE' || rollup === 'ERROR') return 'checks-failing';
+              if (rollup === 'SUCCESS' && node.mergeable === 'MERGEABLE') return 'merge-ready';
+              return 'checks-pending';
+            }
+
+            for (const number of numbers) {
+              try {
+                const status = await decideStatus(number);
+                const { data: issue } = await github.rest.issues.get({
+                  ...context.repo, issue_number: number,
+                });
+                const current = new Set(issue.labels.map((l) => (typeof l === 'string' ? l : l.name)));
+
+                for (const name of MANAGED) {
+                  if (name !== status && current.has(name)) {
+                    await github.rest.issues.removeLabel({
+                      ...context.repo, issue_number: number, name,
+                    }).catch((e) => { if (e.status !== 404) throw e; });
+                  }
+                }
+                if (!current.has(status)) {
+                  await github.rest.issues.addLabels({
+                    ...context.repo, issue_number: number, labels: [status],
+                  });
+                }
+                core.info(`#${number} -> ${status}`);
+              } catch (e) {
+                // One bad PR shouldn't stop the others from being labelled.
+                core.warning(`#${number}: ${e.message}`);
+              }
+            }

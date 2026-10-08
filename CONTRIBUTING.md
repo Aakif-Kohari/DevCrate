@@ -6,6 +6,8 @@ If DevCrate is useful to you, a ⭐ on the repo helps other first-time contribut
 
 ## 1. Fork and set up your local copy
 
+Use Node.js **20.19.0+ on Node 20**, **22.13.0+ on Node 22**, or **24.0.0+**, with npm. These minimum versions are required by ESLint and jsdom; CI uses Node.js 20.19.0.
+
 You won't have permission to push directly to this repo — that's normal, it's how every open-source project works. Instead, you make your own copy (a "fork"), work there, and then propose your changes back via a pull request.
 
 1. Click **Fork** (top-right of this repo's GitHub page). This creates a copy under your own account: `github.com/<your-username>/DevCrate`.

@@ -356,6 +356,7 @@ jobs:
             let totalChars = 0;
             const omittedFiles = [];
             const omittedLockfiles = [];
+            const missingPatchFiles = [];
             for (const f of files) {
               let clipped = false;
               let patch = f.patch || '(binary file, or too large for GitHub to provide a text diff)';
@@ -363,6 +364,8 @@ jobs:
               if (isLockfile) {
                 omittedLockfiles.push(f.filename);
                 patch = '(lockfile — contents omitted on purpose; dependency changes show up in package.json)';
+              } else if (!f.patch) {
+                missingPatchFiles.push(f.filename);
               } else if (patch.length > MAX_PATCH_CHARS) {
                 // Cut at a line boundary and say so explicitly.
                 const cut = patch.lastIndexOf('\n', MAX_PATCH_CHARS);
@@ -395,7 +398,11 @@ jobs:
               ? 'Lockfile contents omitted: ' + formatFileList(omittedLockfiles, n => '`' + n + '`', ', ') +
                 ' — worth a manual look.'
               : '';
-            const truncationNote = [sizeNote, lockfileNote].filter(Boolean).join(' ');
+            const missingPatchNote = missingPatchFiles.length
+              ? 'GitHub did not provide a text diff for: ' + formatFileList(missingPatchFiles, n => '`' + n + '`', ', ') +
+                ' — please review these files manually.'
+              : '';
+            const truncationNote = [sizeNote, lockfileNote, missingPatchNote].filter(Boolean).join(' ');
 
             const prBody = pr.body || '';
             const issueMatch = prBody.match(/\b(?:closes|fixes|resolves)\s+#(\d+)/i);

@@ -4,8 +4,8 @@ name: PR Setup — Default Labels + Assignees
 #   - applies every label listed in `defaultLabels` in .github/pr-config.json
 #     (add or remove names there — no workflow edit needed; labels that don't
 #     exist yet are created automatically)
-#   - assigns the PR's author and, unless `assignOwner` is false, the
-#     repository owner
+#   - attempts to assign the PR's author when GitHub permits it and, unless
+#     `assignOwner` is false, the repository owner
 #
 # Status labels (merge-conflict, merge-ready, ...) are handled separately by
 # pr-status-labels.yml, since they have to be re-evaluated as a PR changes.
@@ -94,11 +94,11 @@ jobs:
             }
 
             // --- assignees ---
-            // No collaborator pre-check: GitHub lets a PR's own author be
-            // assigned even without push access, and the old collaborator
-            // check meant contributors were never even attempted. Assign
-            // everyone in one call, then read the PR back and report honestly
-            // if GitHub dropped anyone, instead of assuming it worked.
+            // Author assignment is best effort: attempt it when assignAuthor
+            // is enabled, and let GitHub decide whether the author is assignable.
+            // Include the repository owner unless assignOwner is false. Assign
+            // everyone in one call, then read the PR back and report whether
+            // GitHub assigned each requested user.
             const wanted = new Set();
             if (config.assignOwner !== false) wanted.add(owner);
             if (config.assignAuthor !== false) wanted.add(author);

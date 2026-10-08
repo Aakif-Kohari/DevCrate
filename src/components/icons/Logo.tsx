@@ -1,21 +1,19 @@
 /**
- * Renders the DevCrate toolbox mark with the same static colors as the favicon.
- * The fixed palette keeps the brand consistent across light and dark themes.
+ * Renders the DevCrate mark: an isometric crate whose planked faces are lit from the top.
+ * It uses a fixed palette (shared with the favicon) and has no background tile, so it reads
+ * the same on light and dark surfaces.
  */
 export default function Logo({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 40 40" className={className} aria-hidden="true">
-      <rect width="40" height="40" rx="9" fill="#4F46E5" />
-      <path
-        d="M15 19 V15 A5 5 0 0 1 20 10 A5 5 0 0 1 25 15 V19"
-        fill="none"
-        stroke="#FFFFFF"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <rect x="10" y="19" width="20" height="13" rx="3" fill="#FFFFFF" />
-      <rect x="10" y="23.5" width="20" height="3" fill="#4F46E5" />
+      <path d="M20 4.5 33 12 20 19.5 7 12Z" fill="#FDBA74" />
+      <path d="M7 12 20 19.5V35L7 27.5Z" fill="#EA580C" />
+      <path d="M33 12 20 19.5V35L33 27.5Z" fill="#C2410C" />
+      <g stroke="#FFEDD5" strokeOpacity=".55" strokeWidth="1.2" fill="none">
+        <path d="M13.5 8.25 26.5 15.75" />
+        <path d="M7 19.75 20 27.25" />
+        <path d="M33 19.75 20 27.25" />
+      </g>
     </svg>
   )
 }

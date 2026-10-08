@@ -1,10 +1,12 @@
 # Contributing to DevCrate
 
-Thanks for considering a contribution — this project is built entirely by people like you, and many contributors here are making their first-ever open-source PR. This guide is self-contained: everything you need to actually get code merged is below. For general OSCI'26 program rules (professionalism expectations, event-wide guidelines), see the [Open Source Connect India program page](https://www.osconnect.org/osci).
+Thanks for considering a contribution — this project is built entirely by people like you, and many contributors here are making their first-ever open-source PR. This guide is self-contained: everything you need to actually get code merged is below. Please also read our [Code of Conduct](CODE_OF_CONDUCT.md) before you start.
 
 If DevCrate is useful to you, a ⭐ on the repo helps other first-time contributors find it — no obligation, just appreciated.
 
 ## 1. Fork and set up your local copy
+
+Use Node.js **20.19.0+ on Node 20**, **22.13.0+ on Node 22**, or **24.0.0+**, with npm. These minimum versions are required by ESLint and jsdom; CI uses Node.js 20.19.0.
 
 You won't have permission to push directly to this repo — that's normal, it's how every open-source project works. Instead, you make your own copy (a "fork"), work there, and then propose your changes back via a pull request.
 
@@ -91,6 +93,9 @@ Then on GitHub: open a pull request from `<your-username>/DevCrate:add-jwt-decod
 Within a few minutes you'll see `build`, `typecheck`, `test`, `lint`, and `scope-check` — all objective, all required. You'll also see an `ai-review` comment and a Vercel preview link — both informational, not required checks.
 
 If everything passes, the maintainer reviews and merges manually — this isn't an auto-merge repo, so don't worry if it takes a little while after checks go green. If something fails, the bot comments leave specific, actionable feedback — fix and push again to the same branch, no need to open a new PR.
+
+### Status labels on your PR
+A bot keeps one status label on every open PR so everyone can see where it stands: `draft`, `merge-conflict` (update your branch from `main`), `changes-requested`, `checks-failing`, `checks-pending`, or `merge-ready` (no conflicts, checks green, nothing outstanding — waiting on the maintainer). The label updates on its own as you push fixes.
 
 ### If `src/tools/registry.ts` has a merge conflict
 Every new tool adds a line to the same list, so if another tool was merged before yours, you may see a conflict. This is normal. Update your branch:

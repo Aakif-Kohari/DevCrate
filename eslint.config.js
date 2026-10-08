@@ -25,4 +25,13 @@ export default defineConfig([
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },
+  {
+    // ESLint 10's `preserve-caught-error` wants `new Error(msg, { cause })`.
+    // The CSV converter wraps JSON.parse failures with only the message on
+    // purpose, and tool folders are off-limits to infra PRs (see
+    // docs/ADDING_A_TOOL.md), so this single file is exempted until a
+    // tool-scoped polish PR adopts `cause` — then delete this block.
+    files: ['src/tools/csv-json-converter/parser.ts'],
+    rules: { 'preserve-caught-error': 'off' },
+  },
 ])

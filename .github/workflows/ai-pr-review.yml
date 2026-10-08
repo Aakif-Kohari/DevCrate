@@ -330,10 +330,79 @@ jobs:
             const files = await github.paginate(github.rest.pulls.listFiles, {
               ...context.repo, pull_number: pr.number, per_page: 100,
             });
-            const diffSummary = files
-              .map(f => `--- ${f.filename} (+${f.additions}/-${f.deletions}) ---\n${(f.patch || '(binary or too large for a text diff)').slice(0, 2000)}`)
-              .join('\n\n')
-              .slice(0, 12000);
+            // Gemini Flash-Lite has a very large context window, so these limits are
+            // generous. They only exist to keep one runaway PR (lockfile, generated
+            // file) from swamping the prompt. Anything that does get cut is cut at a
+            // line boundary and clearly marked, so the model can't mistake the cut
+            // for a real syntax error in the author's code.
+            const MAX_PATCH_CHARS = 20000;
+            const MAX_TOTAL_CHARS = 100000;
+            const MAX_LISTED_FILES = 20;
+            const MAX_FILENAME_CHARS = 200;
+            const formatFileList = (names, formatName, separator) => {
+              const listed = names.slice(0, MAX_LISTED_FILES).map(name => {
+                const displayName = name.length > MAX_FILENAME_CHARS
+                  ? name.slice(0, MAX_FILENAME_CHARS - 1) + '…'
+                  : name;
+                return formatName(displayName);
+              });
+              if (names.length > MAX_LISTED_FILES) {
+                listed.push('… and ' + (names.length - MAX_LISTED_FILES) + ' more files');
+              }
+              return listed.join(separator);
+            };
+            const diffParts = [];
+            const clippedFiles = [];
+            let totalChars = 0;
+            const omittedFiles = [];
+            const omittedLockfiles = [];
+            const missingPatchFiles = [];
+            for (const f of files) {
+              let clipped = false;
+              let patch = f.patch || '(binary file, or too large for GitHub to provide a text diff)';
+              const isLockfile = /(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml)$/.test(f.filename);
+              if (isLockfile) {
+                omittedLockfiles.push(f.filename);
+                patch = '(lockfile — contents omitted on purpose; dependency changes show up in package.json)';
+              } else if (!f.patch) {
+                missingPatchFiles.push(f.filename);
+              } else if (patch.length > MAX_PATCH_CHARS) {
+                // Cut at a line boundary and say so explicitly.
+                const cut = patch.lastIndexOf('\n', MAX_PATCH_CHARS);
+                patch = patch.slice(0, cut > 0 ? cut : MAX_PATCH_CHARS) +
+                  '\n[excerpt ends here — the rest of this file\'s diff was left out for length only]';
+                clipped = true;
+              }
+              const part = `--- ${f.filename} (+${f.additions}/-${f.deletions}) ---\n${patch}`;
+              if (totalChars + part.length > MAX_TOTAL_CHARS) {
+                omittedFiles.push(f.filename);
+                continue;
+              }
+              if (clipped) clippedFiles.push(f.filename);
+              diffParts.push(part);
+              totalChars += part.length;
+            }
+            if (omittedFiles.length) {
+              diffParts.push('Files omitted for total diff length (contents not shown):\n' +
+                formatFileList(omittedFiles, n => '- ' + n, '\n'));
+            }
+            const diffSummary = diffParts.join('\n\n');
+            const sizeNote = (clippedFiles.length || omittedFiles.length)
+              ? 'Large diff: ' +
+                (clippedFiles.length ? 'partial excerpts of ' + formatFileList(clippedFiles, n => '`' + n + '`', ', ') : '') +
+                (clippedFiles.length && omittedFiles.length ? ' and ' : '') +
+                (omittedFiles.length ? 'files not shown to the reviewer: ' + formatFileList(omittedFiles, n => '`' + n + '`', ', ') : '') +
+                ' — worth a manual look.'
+              : '';
+            const lockfileNote = omittedLockfiles.length
+              ? 'Lockfile contents omitted: ' + formatFileList(omittedLockfiles, n => '`' + n + '`', ', ') +
+                ' — worth a manual look.'
+              : '';
+            const missingPatchNote = missingPatchFiles.length
+              ? 'GitHub did not provide a text diff for: ' + formatFileList(missingPatchFiles, n => '`' + n + '`', ', ') +
+                ' — please review these files manually.'
+              : '';
+            const truncationNote = [sizeNote, lockfileNote, missingPatchNote].filter(Boolean).join(' ');
 
             const prBody = pr.body || '';
             const issueMatch = prBody.match(/\b(?:closes|fixes|resolves)\s+#(\d+)/i);
@@ -356,6 +425,12 @@ jobs:
               `src/tools/). A separate automated check already verified this PR's file`,
               `scope — don't repeat that. This review is ADVISORY ONLY: a human maintainer`,
               `reads it and decides whether to merge, nothing merges automatically.`,
+              ``,
+              `The DIFF below is shown to you in full except where a file is explicitly marked`,
+              `as an excerpt or omitted. Those markers are added by the tooling purely to`,
+              `limit prompt size — they are NOT part of the author's code. Never report a`,
+              `cut-off, truncated, or incomplete diff as a problem, and never speculate about`,
+              `code you cannot see. Only comment on what is actually visible.`,
               ``,
               `Focus on:`,
               `1. Does the implementation actually satisfy what the linked issue asked for?`,
@@ -387,7 +462,7 @@ jobs:
             await github.rest.issues.createComment({
               ...context.repo, issue_number: pr.number,
               body: text
-                ? `### 🤖 AI Review (advisory — not a merge gate)\n\n${text}`
+                ? `### 🤖 AI Review (advisory — not a merge gate)\n\n${text}${truncationNote ? '\n\n_' + truncationNote + '_' : ''}`
                 : `_(AI review call failed or returned nothing — please review this PR manually. Raw response: ${JSON.stringify(data).slice(0, 300)})_`,
             });
             // Intentionally never calls core.setFailed — this job is informational only.

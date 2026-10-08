@@ -8,7 +8,13 @@ import { useSidebar } from '../lib/useSidebar'
 import { useFocusTrap } from '../lib/useFocusTrap'
 
 /** Renders sidebar navigation in expanded or icon-only form. */
-function SidebarContent({ collapsed }: { collapsed: boolean }) {
+function SidebarContent({
+  collapsed,
+  onLinkClick,
+}: {
+  collapsed: boolean
+  onLinkClick?: () => void
+}) {
   const linkClasses = ({ isActive }: { isActive: boolean }) =>
     `focus-ring flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors ${
       isActive
@@ -24,15 +30,15 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
 
   return (
     <nav className="flex h-full flex-col gap-1 overflow-y-auto px-3 py-4">
-      <NavLink to="/" end className={linkClasses}>
+      <NavLink to="/" end className={linkClasses} onClick={onLinkClick}>
         <Home size={17} className="shrink-0" />
         <span className={labelClasses}>Home</span>
       </NavLink>
-      <NavLink to="/categories" className={linkClasses}>
+      <NavLink to="/categories" className={linkClasses} onClick={onLinkClick}>
         <LayoutGrid size={17} className="shrink-0" />
         <span className={labelClasses}>Categories</span>
       </NavLink>
-      <NavLink to="/tools" className={linkClasses}>
+      <NavLink to="/tools" className={linkClasses} onClick={onLinkClick}>
         <Wrench size={17} className="shrink-0" />
         <span className={labelClasses}>All Tools</span>
       </NavLink>
@@ -51,7 +57,12 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
                 </div>
                 <div className="flex flex-col gap-0.5">
                   {tools.map(({ meta }) => (
-                    <NavLink key={meta.slug} to={`/tools/${meta.slug}`} className={linkClasses}>
+                    <NavLink
+                      key={meta.slug}
+                      to={`/tools/${meta.slug}`}
+                      className={linkClasses}
+                      onClick={onLinkClick}
+                    >
                       <span className="ml-[23px] truncate">{meta.name}</span>
                     </NavLink>
                   ))}
@@ -129,7 +140,7 @@ export default function Sidebar() {
                   <X size={18} />
                 </button>
               </div>
-              <SidebarContent collapsed={false} />
+              <SidebarContent collapsed={false} onLinkClick={closeDrawer} />
             </motion.aside>
           </>
         )}

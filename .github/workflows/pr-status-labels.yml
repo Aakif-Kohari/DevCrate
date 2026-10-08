@@ -94,12 +94,15 @@ jobs:
               numbers = open.map((p) => p.number);
             }
 
+            // GraphQL query only fetches isDraft, mergeable, and headRefOid.
+            // We use the REST API for check runs because GraphQL's
+            // statusCheckRollup is unreliable for pull_request events.
             const QUERY = `query($owner: String!, $repo: String!, $number: Int!) {
               repository(owner: $owner, name: $repo) {
                 pullRequest(number: $number) {
                   isDraft
                   mergeable
-                  potentialMergeCommit { statusCheckRollup { state } }
+                  headRefOid
                 }
               }
             }`;
@@ -129,8 +132,30 @@ jobs:
               }
               if ([...latest.values()].includes('CHANGES_REQUESTED')) return 'changes-requested';
 
-              const rollup = node.potentialMergeCommit?.statusCheckRollup?.state ?? null;
-              if (rollup === 'FAILURE' || rollup === 'ERROR') return 'checks-failing';
+              // Use the REST API to list check runs on the PR's HEAD commit.
+              // GraphQL's statusCheckRollup (on both potentialMergeCommit and
+              // the head commit) is unreliable for pull_request-triggered
+              // check runs — it often returns null even when checks exist.
+              let rollup = null;
+              try {
+                const { data: { check_runs } } = await github.rest.checks.listForRef({
+                  ...context.repo,
+                  ref: node.headRefOid,
+                  per_page: 100,
+                });
+                if (check_runs.length > 0) {
+                  const failed = check_runs.some((cr) =>
+                    ['failure', 'cancelled', 'timed_out', 'action_required'].includes(cr.conclusion),
+                  );
+                  const allDone = check_runs.every((cr) => cr.status === 'completed');
+                  if (failed) rollup = 'FAILURE';
+                  else if (allDone) rollup = 'SUCCESS';
+                  else rollup = 'PENDING';
+                }
+              } catch (e) {
+                core.warning(`#${number}: could not list check runs: ${e.message}`);
+              }
+              if (rollup === 'FAILURE') return 'checks-failing';
               if (rollup === 'SUCCESS' && node.mergeable === 'MERGEABLE') return 'merge-ready';
               return 'checks-pending';
             }

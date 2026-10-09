@@ -102,7 +102,7 @@ jobs:
                 pullRequest(number: $number) {
                   isDraft
                   mergeable
-                  potentialMergeCommit { oid }
+                  headRefOid
                 }
               }
             }`;
@@ -127,32 +127,64 @@ jobs:
               });
               const latest = new Map();
               for (const r of reviews) {
-                // Ignore bot accounts (e.g., CodeRabbit) so they don't trigger the changes-requested label
-                if (!r.user || r.user.type === 'Bot' || !['APPROVED', 'CHANGES_REQUESTED', 'DISMISSED'].includes(r.state)) continue;
+                // Ignore GitHub Bot Apps (e.g., coderabbitai[bot]) so they don't trigger the changes-requested label
+                if (!r.user || r.user.type === 'Bot' || r.user.login.endsWith('[bot]') || !['APPROVED', 'CHANGES_REQUESTED', 'DISMISSED'].includes(r.state)) continue;
                 latest.set(r.user.login, r.state);
               }
               if ([...latest.values()].includes('CHANGES_REQUESTED')) return 'changes-requested';
 
               // Use the REST API to list check runs and commit statuses on the 
-              // PR's potential merge commit. ci.yml runs on `pull_request`, so 
-              // checks post against the synthetic merge commit, not the head SHA.
-              // We also fetch commit statuses to catch Vercel deployments.
+              // PR's HEAD commit. Live API checks confirm that pull_request 
+              // checks and Vercel statuses attach to the head SHA, not the 
+              // synthetic merge commit.
               let rollup = null;
-              const mergeCommitOid = node.potentialMergeCommit?.oid;
+              const headCommitOid = node.headRefOid;
 
-              if (!mergeCommitOid) {
-                // GitHub hasn't generated the merge commit yet; keep status pending.
+              if (!headCommitOid) {
                 rollup = 'PENDING';
               } else {
                 try {
                   // Paginate check runs
                   const checkRuns = await github.paginate(github.rest.checks.listForRef, {
                     ...context.repo,
-                    ref: mergeCommitOid,
+                    ref: headCommitOid,
                     per_page: 100,
                   });
 
                   // Get combined commit statuses (for Vercel, etc.)
+                  const { data: combinedStatus } = await github.rest.repos.getCombinedStatusForRef({
+                    ...context.repo,
+                    ref: headCommitOid,
+                  });
+
+                  const hasChecks = checkRuns.length > 0 || (combinedStatus.total_count || 0) > 0;
+
+                  if (hasChecks) {
+                    // Evaluate Check Runs
+                    // Treat 'stale' and other non-success conclusions as failures.
+                    const failedCheck = checkRuns.some((cr) =>
+                      cr.conclusion && !['success', 'neutral', 'skipped'].includes(cr.conclusion)
+                    );
+                    const pendingCheck = checkRuns.some((cr) => cr.status !== 'completed');
+                    
+                    // Evaluate Commit Statuses
+                    // Guard against the API's default "pending" state when total_count is 0
+                    const failedStatus = combinedStatus.state === 'failure' || combinedStatus.state === 'error';
+                    const pendingStatus = (combinedStatus.total_count || 0) > 0 && combinedStatus.state === 'pending';
+
+                    if (failedCheck || failedStatus) {
+                      rollup = 'FAILURE';
+                    } else if (pendingCheck || pendingStatus) {
+                      rollup = 'PENDING';
+                    } else {
+                      rollup = 'SUCCESS';
+                    }
+                  }
+                } catch (e) {
+                  core.warning(`#${number}: could not list checks/statuses: ${e.message}`);
+                }
+              }
+              if (rollup === 'FAILURE') return 'checks-failing';
                   const { data: combinedStatus } = await github.rest.repos.getCombinedStatusForRef({
                     ...context.repo,
                     ref: mergeCommitOid,

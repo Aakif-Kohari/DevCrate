@@ -94,7 +94,7 @@ jobs:
               numbers = open.map((p) => p.number);
             }
 
-            // GraphQL query only fetches isDraft, mergeable, and potentialMergeCommit.
+            // GraphQL query only fetches isDraft, mergeable, and headRefOid.
             // We use the REST API for check runs and commit statuses because GraphQL's
             // statusCheckRollup is unreliable for pull_request events.
             const QUERY = `query($owner: String!, $repo: String!, $number: Int!) {
@@ -121,7 +121,7 @@ jobs:
               if (node.mergeable === 'CONFLICTING') return 'merge-conflict';
 
               // Latest meaningful review per reviewer; a later approval or a
-              // dismissal replaces an earlier "changes requested".
+              // dismissed replaces an earlier "changes requested".
               const reviews = await github.paginate(github.rest.pulls.listReviews, {
                 ...context.repo, pull_number: number, per_page: 100,
               });
@@ -155,39 +155,6 @@ jobs:
                   const { data: combinedStatus } = await github.rest.repos.getCombinedStatusForRef({
                     ...context.repo,
                     ref: headCommitOid,
-                  });
-
-                  const hasChecks = checkRuns.length > 0 || (combinedStatus.total_count || 0) > 0;
-
-                  if (hasChecks) {
-                    // Evaluate Check Runs
-                    // Treat 'stale' and other non-success conclusions as failures.
-                    const failedCheck = checkRuns.some((cr) =>
-                      cr.conclusion && !['success', 'neutral', 'skipped'].includes(cr.conclusion)
-                    );
-                    const pendingCheck = checkRuns.some((cr) => cr.status !== 'completed');
-                    
-                    // Evaluate Commit Statuses
-                    // Guard against the API's default "pending" state when total_count is 0
-                    const failedStatus = combinedStatus.state === 'failure' || combinedStatus.state === 'error';
-                    const pendingStatus = (combinedStatus.total_count || 0) > 0 && combinedStatus.state === 'pending';
-
-                    if (failedCheck || failedStatus) {
-                      rollup = 'FAILURE';
-                    } else if (pendingCheck || pendingStatus) {
-                      rollup = 'PENDING';
-                    } else {
-                      rollup = 'SUCCESS';
-                    }
-                  }
-                } catch (e) {
-                  core.warning(`#${number}: could not list checks/statuses: ${e.message}`);
-                }
-              }
-              if (rollup === 'FAILURE') return 'checks-failing';
-                  const { data: combinedStatus } = await github.rest.repos.getCombinedStatusForRef({
-                    ...context.repo,
-                    ref: mergeCommitOid,
                   });
 
                   const hasChecks = checkRuns.length > 0 || (combinedStatus.total_count || 0) > 0;

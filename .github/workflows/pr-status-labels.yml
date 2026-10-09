@@ -127,7 +127,8 @@ jobs:
               });
               const latest = new Map();
               for (const r of reviews) {
-                if (!r.user || !['APPROVED', 'CHANGES_REQUESTED', 'DISMISSED'].includes(r.state)) continue;
+                // Ignore bot accounts (e.g., CodeRabbit) so they don't trigger the changes-requested label
+                if (!r.user || r.user.type === 'Bot' || !['APPROVED', 'CHANGES_REQUESTED', 'DISMISSED'].includes(r.state)) continue;
                 latest.set(r.user.login, r.state);
               }
               if ([...latest.values()].includes('CHANGES_REQUESTED')) return 'changes-requested';
@@ -168,8 +169,9 @@ jobs:
                     const pendingCheck = checkRuns.some((cr) => cr.status !== 'completed');
                     
                     // Evaluate Commit Statuses
+                    // Guard against the API's default "pending" state when total_count is 0
                     const failedStatus = combinedStatus.state === 'failure' || combinedStatus.state === 'error';
-                    const pendingStatus = combinedStatus.state === 'pending';
+                    const pendingStatus = (combinedStatus.total_count || 0) > 0 && combinedStatus.state === 'pending';
 
                     if (failedCheck || failedStatus) {
                       rollup = 'FAILURE';

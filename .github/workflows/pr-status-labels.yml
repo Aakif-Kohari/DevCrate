@@ -94,15 +94,15 @@ jobs:
               numbers = open.map((p) => p.number);
             }
 
-            // GraphQL query only fetches isDraft, mergeable, and headRefOid.
-            // We use the REST API for check runs because GraphQL's
+            // GraphQL query only fetches isDraft, mergeable, and potentialMergeCommit.
+            // We use the REST API for check runs and commit statuses because GraphQL's
             // statusCheckRollup is unreliable for pull_request events.
             const QUERY = `query($owner: String!, $repo: String!, $number: Int!) {
               repository(owner: $owner, name: $repo) {
                 pullRequest(number: $number) {
                   isDraft
                   mergeable
-                  headRefOid
+                  potentialMergeCommit { oid }
                 }
               }
             }`;
@@ -132,28 +132,56 @@ jobs:
               }
               if ([...latest.values()].includes('CHANGES_REQUESTED')) return 'changes-requested';
 
-              // Use the REST API to list check runs on the PR's HEAD commit.
-              // GraphQL's statusCheckRollup (on both potentialMergeCommit and
-              // the head commit) is unreliable for pull_request-triggered
-              // check runs — it often returns null even when checks exist.
+              // Use the REST API to list check runs and commit statuses on the 
+              // PR's potential merge commit. ci.yml runs on `pull_request`, so 
+              // checks post against the synthetic merge commit, not the head SHA.
+              // We also fetch commit statuses to catch Vercel deployments.
               let rollup = null;
-              try {
-                const { data: { check_runs } } = await github.rest.checks.listForRef({
-                  ...context.repo,
-                  ref: node.headRefOid,
-                  per_page: 100,
-                });
-                if (check_runs.length > 0) {
-                  const failed = check_runs.some((cr) =>
-                    ['failure', 'cancelled', 'timed_out', 'action_required'].includes(cr.conclusion),
-                  );
-                  const allDone = check_runs.every((cr) => cr.status === 'completed');
-                  if (failed) rollup = 'FAILURE';
-                  else if (allDone) rollup = 'SUCCESS';
-                  else rollup = 'PENDING';
+              const mergeCommitOid = node.potentialMergeCommit?.oid;
+
+              if (!mergeCommitOid) {
+                // GitHub hasn't generated the merge commit yet; keep status pending.
+                rollup = 'PENDING';
+              } else {
+                try {
+                  // Paginate check runs
+                  const checkRuns = await github.paginate(github.rest.checks.listForRef, {
+                    ...context.repo,
+                    ref: mergeCommitOid,
+                    per_page: 100,
+                  });
+
+                  // Get combined commit statuses (for Vercel, etc.)
+                  const { data: combinedStatus } = await github.rest.repos.getCombinedStatusForRef({
+                    ...context.repo,
+                    ref: mergeCommitOid,
+                  });
+
+                  const hasChecks = checkRuns.length > 0 || (combinedStatus.total_count || 0) > 0;
+
+                  if (hasChecks) {
+                    // Evaluate Check Runs
+                    // Treat 'stale' and other non-success conclusions as failures.
+                    const failedCheck = checkRuns.some((cr) =>
+                      cr.conclusion && !['success', 'neutral', 'skipped'].includes(cr.conclusion)
+                    );
+                    const pendingCheck = checkRuns.some((cr) => cr.status !== 'completed');
+                    
+                    // Evaluate Commit Statuses
+                    const failedStatus = combinedStatus.state === 'failure' || combinedStatus.state === 'error';
+                    const pendingStatus = combinedStatus.state === 'pending';
+
+                    if (failedCheck || failedStatus) {
+                      rollup = 'FAILURE';
+                    } else if (pendingCheck || pendingStatus) {
+                      rollup = 'PENDING';
+                    } else {
+                      rollup = 'SUCCESS';
+                    }
+                  }
+                } catch (e) {
+                  core.warning(`#${number}: could not list checks/statuses: ${e.message}`);
                 }
-              } catch (e) {
-                core.warning(`#${number}: could not list check runs: ${e.message}`);
               }
               if (rollup === 'FAILURE') return 'checks-failing';
               if (rollup === 'SUCCESS' && node.mergeable === 'MERGEABLE') return 'merge-ready';

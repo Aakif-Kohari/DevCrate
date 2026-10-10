@@ -51,8 +51,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  label:
-    name: label
+  evaluate:
+    name: pr-status-evaluator
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -166,7 +166,7 @@ jobs:
                   // force every evaluation to PENDING regardless of actual CI state.
                   // We filter out the job name ('label') and the workflow name ('PR Status Labels').
                   const checkRuns = allCheckRuns.filter((cr) => 
-                    cr.name !== 'label' && 
+                    cr.name !== 'pr-status-evaluator' && 
                     cr.name !== 'PR Status Labels' &&
                     !cr.name.startsWith('PR Status Labels /')
                   );

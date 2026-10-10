@@ -15,10 +15,12 @@ name: PR Status Labels
 # merges anything.
 #
 # Labels are re-evaluated whenever the PR itself changes, whenever any check
-# suite or CI workflow finishes, whenever main moves (that is what creates new conflicts),
-# and on a 15 minute schedule as a safety net. pull_request_review runs get a
-# read-only token on fork PRs and can't change labels, so the schedule is what
-# picks up "changes-requested".
+# suite or CI workflow finishes, whenever a review is submitted/edited/dismissed,
+# whenever main moves, and on a 15 minute schedule as a safety net.
+#
+# NOTE: `pull_request_review` events on fork PRs run with a read-only token,
+# which may cause the label-update step to fail with a 403 on forks. For same-repo
+# PRs, it works perfectly. The 15-minute cron acts as a safety net for forks.
 #
 # Safe with fork PRs: the PR-triggered run uses pull_request_target (see the
 # note in ai-pr-review.yml), never checks out PR code, and only calls GitHub
@@ -27,6 +29,8 @@ name: PR Status Labels
 on:
   pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
   check_suite:
     types: [completed]
   workflow_run:
@@ -47,8 +51,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  label:
-    name: label
+  evaluate:
+    name: pr-status-evaluator
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -85,7 +89,7 @@ jobs:
 
             // Which PRs to evaluate: just the triggering one, or every open one.
             let numbers;
-            if (context.eventName === 'pull_request_target') {
+            if (context.eventName === 'pull_request_target' || context.eventName === 'pull_request_review') {
               numbers = [context.payload.pull_request.number];
             } else {
               const open = await github.paginate(github.rest.pulls.list, {
@@ -94,12 +98,15 @@ jobs:
               numbers = open.map((p) => p.number);
             }
 
+            // GraphQL query only fetches isDraft, mergeable, and headRefOid.
+            // We use the REST API for check runs and commit statuses because GraphQL's
+            // statusCheckRollup is unreliable for pull_request events.
             const QUERY = `query($owner: String!, $repo: String!, $number: Int!) {
               repository(owner: $owner, name: $repo) {
                 pullRequest(number: $number) {
                   isDraft
                   mergeable
-                  potentialMergeCommit { statusCheckRollup { state } }
+                  headRefOid
                 }
               }
             }`;
@@ -118,19 +125,87 @@ jobs:
               if (node.mergeable === 'CONFLICTING') return 'merge-conflict';
 
               // Latest meaningful review per reviewer; a later approval or a
-              // dismissal replaces an earlier "changes requested".
+              // dismissed replaces an earlier "changes requested".
               const reviews = await github.paginate(github.rest.pulls.listReviews, {
                 ...context.repo, pull_number: number, per_page: 100,
               });
               const latest = new Map();
               for (const r of reviews) {
-                if (!r.user || !['APPROVED', 'CHANGES_REQUESTED', 'DISMISSED'].includes(r.state)) continue;
+                // Ignore GitHub Bot Apps (e.g., coderabbitai[bot]) so they don't trigger the changes-requested label
+                const isBot = r.user && (
+                  r.user.type === 'Bot' || 
+                  r.user.login.endsWith('[bot]') || 
+                  r.user.login === 'coderabbitai' ||
+                  r.user.login === 'github-actions'
+                );
+                if (!r.user || isBot || !['APPROVED', 'CHANGES_REQUESTED', 'DISMISSED'].includes(r.state)) continue;
                 latest.set(r.user.login, r.state);
               }
               if ([...latest.values()].includes('CHANGES_REQUESTED')) return 'changes-requested';
 
-              const rollup = node.potentialMergeCommit?.statusCheckRollup?.state ?? null;
-              if (rollup === 'FAILURE' || rollup === 'ERROR') return 'checks-failing';
+              // Use the REST API to list check runs and commit statuses on the 
+              // PR's HEAD commit. Live API checks confirm that pull_request 
+              // checks and Vercel statuses attach to the head SHA, not the 
+              // synthetic merge commit.
+              let rollup = null;
+              const headCommitOid = node.headRefOid;
+
+              if (!headCommitOid) {
+                rollup = 'PENDING';
+              } else {
+                try {
+                  // Paginate check runs
+                  const allCheckRuns = await github.paginate(github.rest.checks.listForRef, {
+                    ...context.repo,
+                    ref: headCommitOid,
+                    per_page: 100,
+                  });
+
+                  // Exclude this workflow's own check runs. They are necessarily still
+                  // 'in_progress' while this script is executing, which would otherwise
+                  // force every evaluation to PENDING regardless of actual CI state.
+                  // We filter out the job name ('label') and the workflow name ('PR Status Labels').
+                  const checkRuns = allCheckRuns.filter((cr) => 
+                    cr.name !== 'pr-status-evaluator' && 
+                    cr.name !== 'PR Status Labels' &&
+                    !cr.name.startsWith('PR Status Labels /')
+                  );
+
+                  // Get combined commit statuses (for Vercel, etc.)
+                  const { data: combinedStatus } = await github.rest.repos.getCombinedStatusForRef({
+                    ...context.repo,
+                    ref: headCommitOid,
+                  });
+
+                  const hasChecks = checkRuns.length > 0 || (combinedStatus.total_count || 0) > 0;
+
+                  if (hasChecks) {
+                    // Evaluate Check Runs
+                    // Treat 'stale' and other non-success conclusions as failures.
+                    const failedCheck = checkRuns.some((cr) =>
+                      cr.conclusion && !['success', 'neutral', 'skipped'].includes(cr.conclusion)
+                    );
+                    
+                    // Evaluate Commit Statuses
+                    // Guard against the API's default "pending" state when total_count is 0
+                    const failedStatus = combinedStatus.state === 'failure' || combinedStatus.state === 'error';
+                    const pendingStatus = (combinedStatus.total_count || 0) > 0 && combinedStatus.state === 'pending';
+
+                    if (failedCheck || failedStatus) {
+                      rollup = 'FAILURE';
+                    } else if (checkRuns.length === 0 || checkRuns.some((cr) => cr.status !== 'completed') || pendingStatus) {
+                      // No check runs registered yet (e.g. Vercel status posted before CI started),
+                      // OR some check runs are still running, OR a commit status is still pending.
+                      rollup = 'PENDING';
+                    } else {
+                      rollup = 'SUCCESS';
+                    }
+                  }
+                } catch (e) {
+                  core.warning(`#${number}: could not list checks/statuses: ${e.message}`);
+                }
+              }
+              if (rollup === 'FAILURE') return 'checks-failing';
               if (rollup === 'SUCCESS' && node.mergeable === 'MERGEABLE') return 'merge-ready';
               return 'checks-pending';
             }

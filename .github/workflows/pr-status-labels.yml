@@ -16,9 +16,13 @@ name: PR Status Labels
 #
 # Labels are re-evaluated whenever the PR itself changes, whenever any check
 # suite or CI workflow finishes, whenever main moves (that is what creates new conflicts),
-# and on a 15 minute schedule as a safety net. pull_request_review runs get a
-# read-only token on fork PRs and can't change labels, so the schedule is what
-# picks up "changes-requested".
+# and on a 15 minute schedule as a safety net. 
+#
+# NOTE: We intentionally do NOT trigger on `pull_request_review` events.
+# GitHub applies a restricted, read-only token to review events on fork PRs,
+# which prevents the workflow from adding/removing labels. Pure review-state
+# changes (dismiss, approve, request changes) are therefore only picked up
+# by the 15-minute cron schedule or when a new commit is pushed.
 #
 # Safe with fork PRs: the PR-triggered run uses pull_request_target (see the
 # note in ai-pr-review.yml), never checks out PR code, and only calls GitHub
@@ -145,11 +149,21 @@ jobs:
               } else {
                 try {
                   // Paginate check runs
-                  const checkRuns = await github.paginate(github.rest.checks.listForRef, {
+                  const allCheckRuns = await github.paginate(github.rest.checks.listForRef, {
                     ...context.repo,
                     ref: headCommitOid,
                     per_page: 100,
                   });
+
+                  // Exclude this workflow's own check runs. They are necessarily still
+                  // 'in_progress' while this script is executing, which would otherwise
+                  // force every evaluation to PENDING regardless of actual CI state.
+                  // We filter out the job name ('label') and the workflow name ('PR Status Labels').
+                  const checkRuns = allCheckRuns.filter((cr) => 
+                    cr.name !== 'label' && 
+                    cr.name !== 'PR Status Labels' &&
+                    !cr.name.startsWith('PR Status Labels /')
+                  );
 
                   // Get combined commit statuses (for Vercel, etc.)
                   const { data: combinedStatus } = await github.rest.repos.getCombinedStatusForRef({

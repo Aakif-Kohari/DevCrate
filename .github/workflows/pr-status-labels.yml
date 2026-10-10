@@ -15,14 +15,12 @@ name: PR Status Labels
 # merges anything.
 #
 # Labels are re-evaluated whenever the PR itself changes, whenever any check
-# suite or CI workflow finishes, whenever main moves (that is what creates new conflicts),
-# and on a 15 minute schedule as a safety net. 
+# suite or CI workflow finishes, whenever a review is submitted/edited/dismissed,
+# whenever main moves, and on a 15 minute schedule as a safety net.
 #
-# NOTE: We intentionally do NOT trigger on `pull_request_review` events.
-# GitHub applies a restricted, read-only token to review events on fork PRs,
-# which prevents the workflow from adding/removing labels. Pure review-state
-# changes (dismiss, approve, request changes) are therefore only picked up
-# by the 15-minute cron schedule or when a new commit is pushed.
+# NOTE: `pull_request_review` events on fork PRs run with a read-only token,
+# which may cause the label-update step to fail with a 403 on forks. For same-repo
+# PRs, it works perfectly. The 15-minute cron acts as a safety net for forks.
 #
 # Safe with fork PRs: the PR-triggered run uses pull_request_target (see the
 # note in ai-pr-review.yml), never checks out PR code, and only calls GitHub
@@ -31,6 +29,8 @@ name: PR Status Labels
 on:
   pull_request_target:
     types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
   check_suite:
     types: [completed]
   workflow_run:
@@ -89,7 +89,7 @@ jobs:
 
             // Which PRs to evaluate: just the triggering one, or every open one.
             let numbers;
-            if (context.eventName === 'pull_request_target') {
+            if (context.eventName === 'pull_request_target' || context.eventName === 'pull_request_review') {
               numbers = [context.payload.pull_request.number];
             } else {
               const open = await github.paginate(github.rest.pulls.list, {
@@ -132,7 +132,13 @@ jobs:
               const latest = new Map();
               for (const r of reviews) {
                 // Ignore GitHub Bot Apps (e.g., coderabbitai[bot]) so they don't trigger the changes-requested label
-                if (!r.user || r.user.type === 'Bot' || r.user.login.endsWith('[bot]') || !['APPROVED', 'CHANGES_REQUESTED', 'DISMISSED'].includes(r.state)) continue;
+                const isBot = r.user && (
+                  r.user.type === 'Bot' || 
+                  r.user.login.endsWith('[bot]') || 
+                  r.user.login === 'coderabbitai' ||
+                  r.user.login === 'github-actions'
+                );
+                if (!r.user || isBot || !['APPROVED', 'CHANGES_REQUESTED', 'DISMISSED'].includes(r.state)) continue;
                 latest.set(r.user.login, r.state);
               }
               if ([...latest.values()].includes('CHANGES_REQUESTED')) return 'changes-requested';

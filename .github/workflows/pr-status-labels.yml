@@ -185,7 +185,6 @@ jobs:
                     const failedCheck = checkRuns.some((cr) =>
                       cr.conclusion && !['success', 'neutral', 'skipped'].includes(cr.conclusion)
                     );
-                    const pendingCheck = checkRuns.some((cr) => cr.status !== 'completed');
                     
                     // Evaluate Commit Statuses
                     // Guard against the API's default "pending" state when total_count is 0
@@ -194,7 +193,9 @@ jobs:
 
                     if (failedCheck || failedStatus) {
                       rollup = 'FAILURE';
-                    } else if (pendingCheck || pendingStatus) {
+                    } else if (checkRuns.length === 0 || checkRuns.some((cr) => cr.status !== 'completed') || pendingStatus) {
+                      // No check runs registered yet (e.g. Vercel status posted before CI started),
+                      // OR some check runs are still running, OR a commit status is still pending.
                       rollup = 'PENDING';
                     } else {
                       rollup = 'SUCCESS';

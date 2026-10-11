@@ -131,14 +131,19 @@ jobs:
               });
               const latest = new Map();
               for (const r of reviews) {
-                // Ignore GitHub Bot Apps (e.g., coderabbitai[bot]) so they don't trigger the changes-requested label
-                const isBot = r.user && (
-                  r.user.type === 'Bot' || 
-                  r.user.login.endsWith('[bot]') || 
-                  r.user.login === 'coderabbitai' ||
-                  r.user.login === 'github-actions'
-                );
-                if (!r.user || isBot || !['APPROVED', 'CHANGES_REQUESTED', 'DISMISSED'].includes(r.state)) continue;
+                if (!r.user) continue;
+                
+                // Robust bot filtering: ignores GitHub Apps, standard bot suffixes, 
+                // and specific known automation accounts so they don't block merging.
+                const isBot = r.user.type === 'Bot' || 
+                              r.user.login.includes('[bot]') || 
+                              r.user.login === 'coderabbitai' ||
+                              r.user.login === 'github-actions' ||
+                              r.user.login === 'dependabot' ||
+                              r.user.login === 'vercel';
+                if (isBot) continue;
+                
+                if (!['APPROVED', 'CHANGES_REQUESTED', 'DISMISSED'].includes(r.state)) continue;
                 latest.set(r.user.login, r.state);
               }
               if ([...latest.values()].includes('CHANGES_REQUESTED')) return 'changes-requested';
@@ -164,7 +169,7 @@ jobs:
                   // Exclude this workflow's own check runs. They are necessarily still
                   // 'in_progress' while this script is executing, which would otherwise
                   // force every evaluation to PENDING regardless of actual CI state.
-                  // We filter out the job name ('label') and the workflow name ('PR Status Labels').
+                  // We filter out the job name ('pr-status-evaluator') and the workflow name ('PR Status Labels').
                   const checkRuns = allCheckRuns.filter((cr) => 
                     cr.name !== 'pr-status-evaluator' && 
                     cr.name !== 'PR Status Labels' &&
@@ -177,25 +182,28 @@ jobs:
                     ref: headCommitOid,
                   });
 
-                  const hasChecks = checkRuns.length > 0 || (combinedStatus.total_count || 0) > 0;
+                  const hasCheckRuns = checkRuns.length > 0;
+                  const hasStatuses = (combinedStatus.total_count || 0) > 0;
 
-                  if (hasChecks) {
-                    // Evaluate Check Runs
+                  if (!hasCheckRuns && !hasStatuses) {
+                    // No checks or statuses registered yet. Assume success so it doesn't 
+                    // get stuck in pending forever if the repo has no CI or it's instantaneous.
+                    rollup = 'SUCCESS';
+                  } else {
+                    // Evaluate Check Runs independently
                     // Treat 'stale' and other non-success conclusions as failures.
-                    const failedCheck = checkRuns.some((cr) =>
+                    const failedCheck = hasCheckRuns && checkRuns.some((cr) =>
                       cr.conclusion && !['success', 'neutral', 'skipped'].includes(cr.conclusion)
                     );
+                    const pendingCheck = hasCheckRuns && checkRuns.some((cr) => cr.status !== 'completed');
                     
-                    // Evaluate Commit Statuses
-                    // Guard against the API's default "pending" state when total_count is 0
-                    const failedStatus = combinedStatus.state === 'failure' || combinedStatus.state === 'error';
-                    const pendingStatus = (combinedStatus.total_count || 0) > 0 && combinedStatus.state === 'pending';
+                    // Evaluate Commit Statuses independently
+                    const failedStatus = hasStatuses && (combinedStatus.state === 'failure' || combinedStatus.state === 'error');
+                    const pendingStatus = hasStatuses && combinedStatus.state === 'pending';
 
                     if (failedCheck || failedStatus) {
                       rollup = 'FAILURE';
-                    } else if (checkRuns.length === 0 || checkRuns.some((cr) => cr.status !== 'completed') || pendingStatus) {
-                      // No check runs registered yet (e.g. Vercel status posted before CI started),
-                      // OR some check runs are still running, OR a commit status is still pending.
+                    } else if (pendingCheck || pendingStatus) {
                       rollup = 'PENDING';
                     } else {
                       rollup = 'SUCCESS';
@@ -205,6 +213,7 @@ jobs:
                   core.warning(`#${number}: could not list checks/statuses: ${e.message}`);
                 }
               }
+              
               if (rollup === 'FAILURE') return 'checks-failing';
               if (rollup === 'SUCCESS' && node.mergeable === 'MERGEABLE') return 'merge-ready';
               return 'checks-pending';

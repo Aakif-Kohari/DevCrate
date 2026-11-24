@@ -10,6 +10,12 @@ function type(value: string) {
 const output = () => screen.getByLabelText('Output', { selector: 'pre' })
 
 describe('entity helpers', () => {
+  it('decodes numeric entities with leading zeros', () => {
+    expect(decodeEntities('&#00000065;')).toBe('A')
+    expect(decodeEntities('&#x0000041;')).toBe('A')
+    expect(decodeEntities('&#99999999999999999999;')).toBe('&#99999999999999999999;')
+  })
+
   it('round-trips the five special characters', () => {
     const text = `<a href="x">Tom & 'Jerry'</a>`
     const encoded = encodeEntities(text)

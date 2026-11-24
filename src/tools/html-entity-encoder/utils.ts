@@ -178,7 +178,7 @@ function fromCodePoint(code: number, original: string): string {
 /** Decodes named, decimal (`&#169;`) and hex (`&#xA9;`) entities. Unknown entities are left as-is. */
 export function decodeEntities(text: string): string {
   return text.replace(
-    /&(?:#(\d{1,7})|#[xX]([0-9a-fA-F]{1,6})|([A-Za-z][A-Za-z0-9]{1,31}));/g,
+    /&(?:#(\d+)|#[xX]([0-9a-fA-F]+)|([A-Za-z][A-Za-z0-9]{1,31}));/g,
     (m, dec, hex, name) => {
       if (dec !== undefined) return fromCodePoint(parseInt(dec, 10), m)
       if (hex !== undefined) return fromCodePoint(parseInt(hex, 16), m)

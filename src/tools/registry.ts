@@ -29,6 +29,8 @@ import urlEncoderDecoderMeta from './url-encoder-decoder/meta'
 import UrlEncoderDecoder from './url-encoder-decoder'
 import imageToBase64Meta from './image-to-base64/meta'
 import ImageToBase64 from './image-to-base64'
+import htmlEntityEncoderMeta from './html-entity-encoder/meta'
+import HtmlEntityEncoder from './html-entity-encoder'
 
 export interface ToolMeta {
   slug: string
@@ -57,6 +59,7 @@ export const toolRegistry: ToolEntry[] = [
   { meta: slugifyMeta, Component: SlugGenerator },
   { meta: urlEncoderDecoderMeta, Component: UrlEncoderDecoder },
   { meta: imageToBase64Meta, Component: ImageToBase64 },
+  { meta: htmlEntityEncoderMeta, Component: HtmlEntityEncoder },
 ]
 
 /** Looks up a registered tool by its URL slug. */

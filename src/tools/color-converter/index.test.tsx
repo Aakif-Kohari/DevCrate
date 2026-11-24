@@ -21,6 +21,12 @@ describe('parseColor', () => {
     expect(formatHex(c)).toBe('#ff000080')
   })
 
+  it('keeps the smallest alpha step visible', () => {
+    const c = parseColor('#ff000001')!
+    expect(formatRgb(c)).toBe('rgba(255, 0, 0, 0.004)')
+    expect(formatHex(c)).toBe('#ff000001')
+  })
+
   it('parses rgb(), rgba() and hsl() forms', () => {
     expect(parseColor('rgb(255, 0, 0)')).toEqual({ r: 255, g: 0, b: 0, a: 1 })
     expect(parseColor('rgba(0, 0, 255, 0.5)')).toEqual({ r: 0, g: 0, b: 255, a: 0.5 })

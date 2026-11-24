@@ -94,7 +94,7 @@ export function parseColor(input: string): Rgba | null {
   return null
 }
 
-const trim = (n: number) => String(Math.round(n * 100) / 100)
+const trim = (n: number) => String(Math.round(n * 1000) / 1000)
 
 export function formatHex({ r, g, b, a }: Rgba): string {
   const h = (n: number) => Math.round(n).toString(16).padStart(2, '0')

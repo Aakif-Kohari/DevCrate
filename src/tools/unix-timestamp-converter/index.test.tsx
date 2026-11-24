@@ -80,6 +80,6 @@ describe('UnixTimestampConverter', () => {
     })
     const expected = new Date('2024-01-01T00:00:00').getTime()
     expect(screen.getByLabelText('Milliseconds').textContent).toBe(String(expected))
-    expect(screen.getByLabelText('Seconds').textContent).toBe(String(expected / 1000))
+    expect(screen.getByLabelText('Seconds').textContent).toBe(String(Math.floor(expected / 1000)))
   })
 })

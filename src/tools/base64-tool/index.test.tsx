@@ -49,4 +49,13 @@ describe('Base64Tool', () => {
     type('')
     expect(screen.getByLabelText('Output', { selector: 'pre' }).textContent).toBe('')
   })
+
+  it('rejects padding-only input', () => {
+    expect(() => decodeBase64('=')).toThrow(/no base64 data/i)
+    expect(() => decodeBase64('==')).toThrow(/no base64 data/i)
+  })
+
+  it('keeps a leading BOM through a round trip', () => {
+    expect(decodeBase64(encodeBase64('﻿a'))).toBe('﻿a')
+  })
 })

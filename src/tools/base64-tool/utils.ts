@@ -17,6 +17,9 @@ export function decodeBase64(input: string): string {
     throw new Error('Input contains characters that are not valid Base64.')
   }
   const unpadded = cleaned.replace(/=+$/, '')
+  if (cleaned.length > 0 && unpadded.length === 0) {
+    throw new Error('Input contains no Base64 data characters.')
+  }
   if (unpadded.length % 4 === 1) {
     throw new Error('Input has an invalid Base64 length.')
   }
@@ -30,7 +33,7 @@ export function decodeBase64(input: string): string {
   }
   const bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0))
   try {
-    return new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+    return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes)
   } catch {
     throw new Error('Decoded bytes are not valid UTF-8 text.')
   }

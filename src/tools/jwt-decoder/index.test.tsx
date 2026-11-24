@@ -71,4 +71,12 @@ describe('JwtDecoder', () => {
     expect(isExpired({ exp: 100 }, 100_000)).toBe(true)
     expect(isExpired({ sub: 'x' }, 100_000)).toBe(false)
   })
+
+  it('rejects a signature that is not base64url', () => {
+    expect(() => decodeJwt('e30.e30.!!!')).toThrow(/signature is not valid base64url/i)
+  })
+
+  it('allows an empty signature', () => {
+    expect(decodeJwt('e30.e30.').signature).toBe('')
+  })
 })

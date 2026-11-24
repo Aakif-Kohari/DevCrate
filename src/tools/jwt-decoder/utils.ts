@@ -31,6 +31,9 @@ export function decodeJwt(token: string): DecodedJwt {
   if (parts.length !== 3) {
     throw new Error('A JWT must have exactly three dot-separated parts.')
   }
+  if (!/^[A-Za-z0-9_-]*$/.test(parts[2])) {
+    throw new Error('The signature is not valid base64url.')
+  }
   return {
     header: decodeSegment(parts[0], 'header'),
     payload: decodeSegment(parts[1], 'payload'),

@@ -8,6 +8,21 @@ function type(value: string) {
 }
 
 describe('parseQuery', () => {
+  it('keeps constructor and __proto__ as ordinary keys', () => {
+    const { json } = parseQuery('constructor=x&__proto__=y')
+    expect(Object.keys(json)).toEqual(['constructor', '__proto__'])
+    expect(json.constructor).toBe('x')
+    expect(Object.getOwnPropertyDescriptor(json, '__proto__')?.value).toBe('y')
+    expect(JSON.parse(JSON.stringify(json))).toEqual({ constructor: 'x', ['__proto__']: 'y' })
+  })
+
+  it('keeps both params in a bare query that contains a question mark', () => {
+    expect(parseQuery('debug&next?step=2').pairs).toEqual([
+      ['debug', ''],
+      ['next?step', '2'],
+    ])
+  })
+
   it('accepts a full URL, a ?query and a bare query', () => {
     expect(parseQuery('https://example.com/p?a=1&b=2#frag').json).toEqual({ a: '1', b: '2' })
     expect(parseQuery('?a=1&b=2').json).toEqual({ a: '1', b: '2' })
@@ -47,9 +62,10 @@ describe('QueryStringParser', () => {
     expect(screen.getByRole('alert').textContent).toMatch(/valid URL/i)
   })
 
-  it('says so when there are no parameters, and stays quiet when empty', () => {
+  it('says so when there are no parameters, and prompts when empty', () => {
     render(<QueryStringParser />)
     expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.getByRole('status').textContent).toMatch(/enter a url or query string/i)
     type('https://example.com/path')
     expect(screen.getByRole('status').textContent).toMatch(/no query parameters/i)
   })

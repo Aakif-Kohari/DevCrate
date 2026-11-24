@@ -24,13 +24,13 @@ export function parseQuery(input: string): ParsedQuery {
     const hashAt = value.indexOf('#')
     const withoutHash = hashAt === -1 ? value : value.slice(0, hashAt)
     const questionAt = withoutHash.indexOf('?')
-    const looksLikePath = questionAt > 0 && !withoutHash.slice(0, questionAt).includes('=')
+    const looksLikePath = questionAt > 0 && !/[=&]/.test(withoutHash.slice(0, questionAt))
     query = looksLikePath ? withoutHash.slice(questionAt) : withoutHash
   }
 
   const params = new URLSearchParams(query.startsWith('?') ? query.slice(1) : query)
   const pairs = [...params.entries()] as [string, string][]
-  const json: Record<string, string | string[]> = {}
+  const json: Record<string, string | string[]> = Object.create(null)
   for (const [key, val] of pairs) {
     const existing = json[key]
     if (existing === undefined) json[key] = val

@@ -5,16 +5,27 @@ import { parseQuery, type ParsedQuery } from './utils'
 export default function QueryStringParser() {
   const [input, setInput] = useState('')
 
-  const { result, message } = useMemo(() => {
-    if (!input.trim()) return { result: null as ParsedQuery | null, message: null as string | null }
+  const { result, message, isError } = useMemo(() => {
+    if (!input.trim()) {
+      return {
+        result: null as ParsedQuery | null,
+        message: 'Enter a URL or query string.' as string | null,
+        isError: false,
+      }
+    }
     try {
       const parsed = parseQuery(input)
       return {
         result: parsed,
         message: parsed.pairs.length === 0 ? 'No query parameters found.' : null,
+        isError: false,
       }
     } catch (e) {
-      return { result: null, message: e instanceof Error ? e.message : 'Unable to parse input.' }
+      return {
+        result: null,
+        message: e instanceof Error ? e.message : 'Unable to parse input.',
+        isError: true,
+      }
     }
   }, [input])
 
@@ -38,9 +49,9 @@ export default function QueryStringParser() {
 
       {message && (
         <p
-          role={result === null ? 'alert' : 'status'}
+          role={isError ? 'alert' : 'status'}
           className={`rounded-lg border p-3 text-sm ${
-            result === null
+            isError
               ? 'border-red-300 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300'
               : 'border-border bg-muted'
           }`}

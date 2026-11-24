@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import ChmodCalculator from './index'
 import { fromOctal, toOctal, toSymbolic } from './utils'
 
@@ -52,5 +52,14 @@ describe('ChmodCalculator', () => {
     expect(screen.getByText('rw-r--r--')).toBeTruthy()
     expect(fromOctal('77')).toBeNull()
     expect(fromOctal('12345')).toBeNull()
+  })
+
+  it('stops saying Copied once the command changes', async () => {
+    Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } })
+    render(<ChmodCalculator />)
+    fireEvent.click(screen.getByRole('button', { name: 'Copy' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Copied' })).toBeTruthy())
+    fireEvent.click(screen.getByLabelText('owner execute'))
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeTruthy()
   })
 })

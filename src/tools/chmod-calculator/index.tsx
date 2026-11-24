@@ -26,7 +26,7 @@ function initial(): Permissions {
 export default function ChmodCalculator() {
   const [perms, setPerms] = useState<Permissions>(initial)
   const [octalDraft, setOctalDraft] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
+  const [copiedCommand, setCopiedCommand] = useState<string | null>(null)
 
   const octal = toOctal(perms)
   const symbolic = toSymbolic(perms)
@@ -52,10 +52,10 @@ export default function ChmodCalculator() {
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(command)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      setCopiedCommand(command)
+      setTimeout(() => setCopiedCommand(null), 2000)
     } catch {
-      setCopied(false)
+      setCopiedCommand(null)
     }
   }
 
@@ -156,7 +156,7 @@ export default function ChmodCalculator() {
             onClick={copy}
             className="focus-ring rounded-lg border border-border px-3 py-2 text-sm hover:bg-muted"
           >
-            {copied ? 'Copied' : 'Copy'}
+            {copiedCommand === command ? 'Copied' : 'Copy'}
           </button>
         </div>
       </div>

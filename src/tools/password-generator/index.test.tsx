@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import PasswordGenerator from './index'
 import { generatePassword, getCharacterSets, randomInt, type PasswordOptions } from './utils'
 
@@ -88,5 +88,30 @@ describe('PasswordGenerator', () => {
     }
     expect(screen.getByRole('alert').textContent).toMatch(/at least one/i)
     expect(screen.getByLabelText('Password', { selector: 'output' }).textContent).toBe('')
+  })
+
+  it('lets the length box be cleared and retyped, clamping on blur', () => {
+    render(<PasswordGenerator />)
+    const box = screen.getByLabelText('Length value') as HTMLInputElement
+    fireEvent.change(box, { target: { value: '' } })
+    expect(box.value).toBe('')
+    fireEvent.change(box, { target: { value: '3' } })
+    expect(box.value).toBe('3')
+    fireEvent.change(box, { target: { value: '32' } })
+    fireEvent.blur(box)
+    expect(box.value).toBe('32')
+    expect(screen.getByLabelText('Password', { selector: 'output' }).textContent).toHaveLength(32)
+    fireEvent.change(box, { target: { value: '2' } })
+    fireEvent.keyDown(box, { key: 'Enter' })
+    expect(box.value).toBe('8')
+  })
+
+  it('does not say Copied for a regenerated password', async () => {
+    Object.assign(navigator, { clipboard: { writeText: vi.fn().mockResolvedValue(undefined) } })
+    render(<PasswordGenerator />)
+    fireEvent.click(screen.getByRole('button', { name: 'Copy' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Copied' })).toBeTruthy())
+    fireEvent.click(screen.getByRole('button', { name: 'Regenerate' }))
+    expect(screen.getByRole('button', { name: 'Copy' })).toBeTruthy()
   })
 })

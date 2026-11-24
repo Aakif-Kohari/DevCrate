@@ -27,7 +27,8 @@ export default function PasswordGenerator() {
     excludeAmbiguous: false,
   })
   const [nonce, setNonce] = useState(0)
-  const [copied, setCopied] = useState(false)
+  const [copiedPassword, setCopiedPassword] = useState<string | null>(null)
+  const [lengthDraft, setLengthDraft] = useState<string | null>(null)
 
   const noSets = getCharacterSets(options).length === 0
 
@@ -43,10 +44,10 @@ export default function PasswordGenerator() {
     if (!password) return
     try {
       await navigator.clipboard.writeText(password)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      setCopiedPassword(password)
+      setTimeout(() => setCopiedPassword(null), 2000)
     } catch {
-      setCopied(false)
+      setCopiedPassword(null)
     }
   }
 
@@ -56,6 +57,11 @@ export default function PasswordGenerator() {
       ...prev,
       length: Math.min(MAX_LENGTH, Math.max(MIN_LENGTH, Math.round(value))),
     }))
+  }
+
+  const commitLengthDraft = () => {
+    if (lengthDraft !== null && lengthDraft.trim() !== '') setLength(Number(lengthDraft))
+    setLengthDraft(null)
   }
 
   return (
@@ -85,7 +91,7 @@ export default function PasswordGenerator() {
             disabled={!password}
             className="focus-ring rounded-lg border border-border px-3 py-2 text-sm hover:bg-muted disabled:opacity-50"
           >
-            {copied ? 'Copied' : 'Copy'}
+            {copiedPassword === password ? 'Copied' : 'Copy'}
           </button>
         </div>
         <p className="mt-2 text-sm" aria-live="polite">
@@ -112,7 +118,10 @@ export default function PasswordGenerator() {
             min={MIN_LENGTH}
             max={MAX_LENGTH}
             value={options.length}
-            onChange={(e) => setLength(Number(e.target.value))}
+            onChange={(e) => {
+              setLengthDraft(null)
+              setLength(Number(e.target.value))
+            }}
             className="w-full max-w-md"
           />
           <input
@@ -120,8 +129,12 @@ export default function PasswordGenerator() {
             aria-label="Length value"
             min={MIN_LENGTH}
             max={MAX_LENGTH}
-            value={options.length}
-            onChange={(e) => setLength(Number(e.target.value))}
+            value={lengthDraft ?? options.length}
+            onChange={(e) => setLengthDraft(e.target.value)}
+            onBlur={commitLengthDraft}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commitLengthDraft()
+            }}
             className="focus-ring w-20 rounded-lg border border-border bg-card p-1 text-card-foreground"
           />
         </div>

@@ -31,6 +31,20 @@ import imageToBase64Meta from './image-to-base64/meta'
 import ImageToBase64 from './image-to-base64'
 import unixTimestampConverterMeta from './unix-timestamp-converter/meta'
 import UnixTimestampConverter from './unix-timestamp-converter'
+import htmlEntityEncoderMeta from './html-entity-encoder/meta'
+import HtmlEntityEncoder from './html-entity-encoder'
+import queryStringParserMeta from './query-string-parser/meta'
+import QueryStringParser from './query-string-parser'
+import colorConverterMeta from './color-converter/meta'
+import ColorConverter from './color-converter'
+import passwordGeneratorMeta from './password-generator/meta'
+import PasswordGenerator from './password-generator'
+import chmodCalculatorMeta from './chmod-calculator/meta'
+import ChmodCalculator from './chmod-calculator'
+import jwtDecoderMeta from './jwt-decoder/meta'
+import JwtDecoder from './jwt-decoder'
+import base64ToolMeta from './base64-tool/meta'
+import Base64Tool from './base64-tool'
 
 export interface ToolMeta {
   slug: string
@@ -60,6 +74,13 @@ export const toolRegistry: ToolEntry[] = [
   { meta: urlEncoderDecoderMeta, Component: UrlEncoderDecoder },
   { meta: imageToBase64Meta, Component: ImageToBase64 },
   { meta: unixTimestampConverterMeta, Component: UnixTimestampConverter },
+  { meta: htmlEntityEncoderMeta, Component: HtmlEntityEncoder },
+  { meta: queryStringParserMeta, Component: QueryStringParser },
+  { meta: colorConverterMeta, Component: ColorConverter },
+  { meta: passwordGeneratorMeta, Component: PasswordGenerator },
+  { meta: chmodCalculatorMeta, Component: ChmodCalculator },
+  { meta: jwtDecoderMeta, Component: JwtDecoder },
+  { meta: base64ToolMeta, Component: Base64Tool },
 ]
 
 /** Looks up a registered tool by its URL slug. */

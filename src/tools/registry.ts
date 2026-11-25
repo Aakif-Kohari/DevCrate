@@ -29,6 +29,8 @@ import urlEncoderDecoderMeta from './url-encoder-decoder/meta'
 import UrlEncoderDecoder from './url-encoder-decoder'
 import imageToBase64Meta from './image-to-base64/meta'
 import ImageToBase64 from './image-to-base64'
+import chmodCalculatorMeta from './chmod-calculator/meta'
+import ChmodCalculator from './chmod-calculator'
 import jwtDecoderMeta from './jwt-decoder/meta'
 import JwtDecoder from './jwt-decoder'
 import base64ToolMeta from './base64-tool/meta'
@@ -61,6 +63,7 @@ export const toolRegistry: ToolEntry[] = [
   { meta: slugifyMeta, Component: SlugGenerator },
   { meta: urlEncoderDecoderMeta, Component: UrlEncoderDecoder },
   { meta: imageToBase64Meta, Component: ImageToBase64 },
+  { meta: chmodCalculatorMeta, Component: ChmodCalculator },
   { meta: jwtDecoderMeta, Component: JwtDecoder },
   { meta: base64ToolMeta, Component: Base64Tool },
 ]
